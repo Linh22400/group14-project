@@ -1,0 +1,2 @@
+- Thành viên: A (Backend), B (Frontend), C (Database)
+- Mục tiêu: Thực hành làm việc nhóm với Git & GitHub
