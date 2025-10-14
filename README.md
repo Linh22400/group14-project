@@ -1,2 +1,2 @@
-- Thành viên: A (Backend), B (Frontend), C (Database)
+- Thành viên: Nguyễn Hồng Linh (Backend), Lê Vĩnh Phát (Frontend), Nguyễn Thanh Dân (Database)
 - Mục tiêu: Thực hành làm việc nhóm với Git & GitHub
