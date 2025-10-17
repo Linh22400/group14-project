@@ -1,9 +1,8 @@
-const mongoose = require('mongoose');
 const User = require('../models/User');
 
 exports.getUsers = async (_req, res, next) => {
   try {
-    const users = await User.find().lean();
+    const users = await User.find();
     res.json(users);
   } catch (err) { next(err); }
 };
@@ -17,17 +16,12 @@ exports.createUser = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ===== NEW: UPDATE =====
+// ===== UPDATE USER =====
 exports.updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-
-    // validate ObjectId để tránh cast error
-    if (!mongoose.isValidObjectId(id)) {
-      return res.status(400).json({ message: 'invalid user id' });
-    }
-
     const { name, email } = req.body || {};
+    
     if (!name && !email) {
       return res.status(400).json({ message: 'nothing to update' });
     }
@@ -35,7 +29,7 @@ exports.updateUser = async (req, res, next) => {
     const updated = await User.findByIdAndUpdate(
       id,
       { $set: { ...(name && { name }), ...(email && { email }) } },
-      { new: true, runValidators: true }
+      { new: true }
     );
 
     if (!updated) return res.status(404).json({ message: 'user not found' });
@@ -43,18 +37,13 @@ exports.updateUser = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ===== NEW: DELETE =====
+// ===== DELETE USER =====
 exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    if (!mongoose.isValidObjectId(id)) {
-      return res.status(400).json({ message: 'invalid user id' });
-    }
-
     const deleted = await User.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ message: 'user not found' });
 
-    // có thể trả 204 No Content – mình trả 200 để dễ debug
     res.json({ message: 'user deleted', id: deleted._id });
   } catch (err) { next(err); }
 };
