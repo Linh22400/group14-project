@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import useValidation from '../hooks/useValidation';
 
-const AddUser = ({ onUserAdded }) => {
+const AddUser = ({ onUserAdded, showNotification }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { errors, validateField, validateAll, clearError } = useValidation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!name.trim() || !email.trim()) {
-      alert('Vui lòng điền đầy đủ thông tin!');
+    // Validate all fields
+    const isValid = validateAll({ name, email });
+    if (!isValid) {
       return;
     }
 
@@ -20,7 +23,7 @@ const AddUser = ({ onUserAdded }) => {
       const newUser = { name: name.trim(), email: email.trim() };
       await axios.post('http://localhost:3000/api/users', newUser);
       
-      alert('Thêm người dùng thành công! 🎉');
+      showNotification('Thêm người dùng thành công! 🎉', 'success');
       setName('');
       setEmail('');
       
@@ -29,7 +32,7 @@ const AddUser = ({ onUserAdded }) => {
       }
     } catch (error) {
       console.error('Lỗi khi thêm người dùng:', error);
-      alert('Có lỗi xảy ra khi thêm người dùng! Vui lòng thử lại.');
+      showNotification('Có lỗi xảy ra khi thêm người dùng! Vui lòng thử lại.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -47,12 +50,17 @@ const AddUser = ({ onUserAdded }) => {
             id="name"
             type="text" 
             value={name} 
-            onChange={(e) => setName(e.target.value)} 
+            onChange={(e) => {
+              setName(e.target.value);
+              clearError('name');
+            }}
+            onBlur={() => validateField('name', name)}
             placeholder="Nhập họ và tên..."
-            className="form-input"
+            className={`form-input ${errors.name ? 'error' : ''}`}
             required 
             disabled={isSubmitting}
           />
+          {errors.name && <span className="error-message">{errors.name}</span>}
         </div>
         
         <div className="form-group">
@@ -64,12 +72,17 @@ const AddUser = ({ onUserAdded }) => {
             id="email"
             type="email" 
             value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
+            onChange={(e) => {
+              setEmail(e.target.value);
+              clearError('email');
+            }}
+            onBlur={() => validateField('email', email)}
             placeholder="Nhập địa chỉ email..."
-            className="form-input"
+            className={`form-input ${errors.email ? 'error' : ''}`}
             required 
             disabled={isSubmitting}
           />
+          {errors.email && <span className="error-message">{errors.email}</span>}
         </div>
         
         <button 
@@ -143,6 +156,18 @@ const AddUser = ({ onUserAdded }) => {
         
         .form-input::placeholder {
           color: #95a5a6;
+        }
+        
+        .form-input.error {
+          border-color: #e74c3c;
+          background-color: #fdf2f2;
+        }
+        
+        .error-message {
+          color: #e74c3c;
+          font-size: 0.8rem;
+          margin-top: 0.25rem;
+          display: block;
         }
         
         .submit-btn {

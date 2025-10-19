@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import useValidation from '../hooks/useValidation';
 
-const UserList = ({ refresh }) => {
+const UserList = ({ refresh, showNotification }) => {
   const [users, setUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [loading, setLoading] = useState(true);
+  const { errors, validateField, validateAll, clearError } = useValidation();
 
   // Lấy danh sách users từ API
   const fetchUsers = async () => {
@@ -16,7 +18,7 @@ const UserList = ({ refresh }) => {
       setUsers(response.data);
     } catch (error) {
       console.error('Lỗi khi lấy danh sách users:', error);
-      alert('Không thể tải danh sách người dùng!');
+      showNotification('Không thể tải danh sách người dùng!', 'error');
     } finally {
       setLoading(false);
     }
@@ -32,10 +34,10 @@ const UserList = ({ refresh }) => {
       try {
         await axios.delete(`http://localhost:3000/api/users/${userId}`);
         fetchUsers(); // Refresh danh sách
-        alert('Xóa người dùng thành công! ✅');
-      } catch (error) {
-        console.error('Lỗi khi xóa người dùng:', error);
-        alert('Có lỗi xảy ra khi xóa người dùng!');
+      showNotification('Xóa người dùng thành công! ✅', 'success');
+    } catch (error) {
+      console.error('Lỗi khi xóa người dùng:', error);
+      showNotification('Có lỗi xảy ra khi xóa người dùng!', 'error');
       }
     }
   };
@@ -56,8 +58,9 @@ const UserList = ({ refresh }) => {
 
   // Lưu chỉnh sửa
   const saveEdit = async () => {
-    if (!editName.trim() || !editEmail.trim()) {
-      alert('Vui lòng điền đầy đủ thông tin!');
+    // Validate all fields
+    const isValid = validateAll({ name: editName, email: editEmail });
+    if (!isValid) {
       return;
     }
 
@@ -68,10 +71,10 @@ const UserList = ({ refresh }) => {
       });
       fetchUsers(); // Refresh danh sách
       cancelEdit();
-      alert('Cập nhật người dùng thành công! ✅');
+      showNotification('Cập nhật người dùng thành công! ✅', 'success');
     } catch (error) {
       console.error('Lỗi khi cập nhật người dùng:', error);
-      alert('Có lỗi xảy ra khi cập nhật người dùng!');
+      showNotification('Có lỗi xảy ra khi cập nhật người dùng!', 'error');
     }
   };
 
@@ -117,12 +120,19 @@ const UserList = ({ refresh }) => {
                   <tr key={user._id || user.id} className="table-row">
                     <td className="table-cell name-cell">
                       {editingUser && editingUser._id === user._id ? (
-                        <input
-                          type="text"
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="edit-input"
-                        />
+                        <div className="edit-field">
+                          <input
+                            type="text"
+                            value={editName}
+                            onChange={(e) => {
+                              setEditName(e.target.value);
+                              clearError('name');
+                            }}
+                            onBlur={() => validateField('name', editName)}
+                            className={`edit-input ${errors.name ? 'error' : ''}`}
+                          />
+                          {errors.name && <span className="error-message-inline">{errors.name}</span>}
+                        </div>
                       ) : (
                         <div className="user-info">
                           <div className="user-avatar">{user.name.charAt(0).toUpperCase()}</div>
@@ -132,12 +142,19 @@ const UserList = ({ refresh }) => {
                     </td>
                     <td className="table-cell email-cell">
                       {editingUser && editingUser._id === user._id ? (
-                        <input
-                          type="email"
-                          value={editEmail}
-                          onChange={(e) => setEditEmail(e.target.value)}
-                          className="edit-input"
-                        />
+                        <div className="edit-field">
+                          <input
+                            type="email"
+                            value={editEmail}
+                            onChange={(e) => {
+                              setEditEmail(e.target.value);
+                              clearError('email');
+                            }}
+                            onBlur={() => validateField('email', editEmail)}
+                            className={`edit-input ${errors.email ? 'error' : ''}`}
+                          />
+                          {errors.email && <span className="error-message-inline">{errors.email}</span>}
+                        </div>
                       ) : (
                         <span className="user-email">{user.email}</span>
                       )}
@@ -324,6 +341,27 @@ const UserList = ({ refresh }) => {
         .edit-input:focus {
           outline: none;
           box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .edit-input.error {
+          border-color: #e74c3c;
+          background-color: #fdf2f2;
+        }
+        
+        .edit-field {
+          position: relative;
+        }
+        
+        .error-message-inline {
+          color: #e74c3c;
+          font-size: 0.7rem;
+          margin-top: 0.2rem;
+          display: block;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          white-space: nowrap;
+          z-index: 10;
         }
         
         .action-buttons {

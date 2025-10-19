@@ -1,17 +1,34 @@
 import React, { useState } from 'react';
 import UserList from './components/UserList';
 import AddUser from './components/AddUser';
+import Notification from './components/Notification';
 import './App.css';
 
 function App() {
   const [refresh, setRefresh] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   const handleUserAdded = () => {
     setRefresh(!refresh); // Trigger re-render để refresh danh sách
   };
 
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+  };
+
+  const hideNotification = () => {
+    setNotification(null);
+  };
+
   return (
     <div className="App">
+      {notification && (
+        <Notification 
+          message={notification.message} 
+          type={notification.type}
+          onClose={hideNotification}
+        />
+      )}
       <header className="app-header">
         <div className="container">
           <h1 className="app-title">
@@ -28,14 +45,14 @@ function App() {
             <section className="add-user-section">
               <div className="section-card">
                 <h2 className="section-title">Thêm Người Dùng Mới</h2>
-                <AddUser onUserAdded={handleUserAdded} />
+                <AddUser onUserAdded={handleUserAdded} showNotification={showNotification} />
               </div>
             </section>
             
             <section className="user-list-section">
               <div className="section-card">
                 <h2 className="section-title">Danh Sách Người Dùng</h2>
-                <UserList refresh={refresh} />
+                <UserList refresh={refresh} showNotification={showNotification} />
               </div>
             </section>
           </div>
