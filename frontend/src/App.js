@@ -12,7 +12,7 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Quản lý User - Frontend React</h1>
+      <h1>Quản lý User - Frontend React 2</h1>
       <AddUser onUserAdded={handleUserAdded} />
       <UserList key={refresh} />
     </div>
