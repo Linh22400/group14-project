@@ -33,7 +33,7 @@ function App() {
         <div className="container">
           <h1 className="app-title">
             <span className="icon">👥</span>
-            Quản Lý Người Dùng
+            Quản Lý Người Dùng 1
           </h1>
           <p className="app-subtitle">Hệ thống quản lý người dùng hiện đại</p>
         </div>
