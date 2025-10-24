@@ -5,6 +5,7 @@ import useValidation from '../hooks/useValidation';
 const AddUser = ({ onUserAdded, showNotification }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { errors, validateField, validateAll, clearError } = useValidation();
 
@@ -12,7 +13,7 @@ const AddUser = ({ onUserAdded, showNotification }) => {
     e.preventDefault();
     
     // Validate all fields
-    const isValid = validateAll({ name, email });
+    const isValid = validateAll({ name, email, password });
     if (!isValid) {
       return;
     }
@@ -20,12 +21,13 @@ const AddUser = ({ onUserAdded, showNotification }) => {
     setIsSubmitting(true);
     
     try {
-      const newUser = { name: name.trim(), email: email.trim() };
+      const newUser = { name: name.trim(), email: email.trim(), password: password.trim() };
       await axios.post('http://localhost:3000/api/users', newUser);
       
       showNotification('Thêm người dùng thành công! 🎉', 'success');
       setName('');
       setEmail('');
+      setPassword('');
       
       if (onUserAdded) {
         onUserAdded();
@@ -83,6 +85,29 @@ const AddUser = ({ onUserAdded, showNotification }) => {
             disabled={isSubmitting}
           />
           {errors.email && <span className="error-message">{errors.email}</span>}
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="password" className="form-label">
+            <span className="label-icon">🔒</span>
+            Mật khẩu
+          </label>
+          <input 
+            id="password"
+            type="password" 
+            value={password} 
+            onChange={(e) => {
+              setPassword(e.target.value);
+              clearError('password');
+            }}
+            onBlur={() => validateField('password', password)}
+            placeholder="Nhập mật khẩu (ít nhất 6 ký tự)..."
+            className={`form-input ${errors.password ? 'error' : ''}`}
+            required 
+            disabled={isSubmitting}
+            minLength="6"
+          />
+          {errors.password && <span className="error-message">{errors.password}</span>}
         </div>
         
         <button 
