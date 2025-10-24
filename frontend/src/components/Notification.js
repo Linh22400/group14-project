@@ -14,6 +14,11 @@ const Notification = ({ message, type = 'error', duration = 3000, onClose }) => 
     }
   }, [message, duration, onClose]);
 
+  // Reset visible state when message changes
+  useEffect(() => {
+    setIsVisible(!!message);
+  }, [message]);
+
   if (!message || !isVisible) return null;
 
   const getIcon = () => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import useValidation from '../hooks/useValidation';
+import authService from '../services/authService';
 
 const UserList = ({ refresh, showNotification }) => {
   const [users, setUsers] = useState([]);
@@ -14,11 +15,19 @@ const UserList = ({ refresh, showNotification }) => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/users');
+      const response = await axios.get('http://localhost:3000/api/users', {
+        headers: authService.getAuthHeaders()
+      });
       setUsers(response.data);
     } catch (error) {
       console.error('Lỗi khi lấy danh sách users:', error);
-      showNotification('Không thể tải danh sách người dùng!', 'error');
+      if (error.response?.status === 401) {
+        showNotification('Bạn cần đăng nhập với quyền Admin để xem danh sách người dùng!', 'error');
+      } else if (error.response?.status === 403) {
+        showNotification('Bạn không có quyền truy cập danh sách người dùng!', 'error');
+      } else {
+        showNotification('Không thể tải danh sách người dùng!', 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -32,12 +41,20 @@ const UserList = ({ refresh, showNotification }) => {
   const handleDelete = async (userId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
       try {
-        await axios.delete(`http://localhost:3000/api/users/${userId}`);
+        await axios.delete(`http://localhost:3000/api/users/${userId}`, {
+          headers: authService.getAuthHeaders()
+        });
         fetchUsers(); // Refresh danh sách
-      showNotification('Xóa người dùng thành công! ✅', 'success');
-    } catch (error) {
-      console.error('Lỗi khi xóa người dùng:', error);
-      showNotification('Có lỗi xảy ra khi xóa người dùng!', 'error');
+        showNotification('Xóa người dùng thành công! ✅', 'success');
+      } catch (error) {
+        console.error('Lỗi khi xóa người dùng:', error);
+        if (error.response?.status === 403) {
+          showNotification('Bạn không có quyền xóa người dùng này!', 'error');
+        } else if (error.response?.status === 404) {
+          showNotification('Người dùng không tồn tại!', 'error');
+        } else {
+          showNotification('Có lỗi xảy ra khi xóa người dùng!', 'error');
+        }
       }
     }
   };
@@ -65,16 +82,22 @@ const UserList = ({ refresh, showNotification }) => {
     }
 
     try {
-      await axios.put(`http://localhost:3000/api/users/${editingUser._id}`, {
+      await axios.put(`http://localhost:3000/api/users/${editingUser.id}`, {
         name: editName.trim(),
         email: editEmail.trim()
+      }, {
+        headers: authService.getAuthHeaders()
       });
       fetchUsers(); // Refresh danh sách
       cancelEdit();
       showNotification('Cập nhật người dùng thành công! ✅', 'success');
     } catch (error) {
       console.error('Lỗi khi cập nhật người dùng:', error);
-      showNotification('Có lỗi xảy ra khi cập nhật người dùng!', 'error');
+      if (error.response?.status === 403) {
+        showNotification('Bạn không có quyền cập nhật người dùng!', 'error');
+      } else {
+        showNotification('Có lỗi xảy ra khi cập nhật người dùng!', 'error');
+      }
     }
   };
 
@@ -117,9 +140,9 @@ const UserList = ({ refresh, showNotification }) => {
               </thead>
               <tbody>
                 {users.map(user => (
-                  <tr key={user._id || user.id} className="table-row">
+                  <tr key={user.id} className="table-row">
                     <td className="table-cell name-cell">
-                      {editingUser && editingUser._id === user._id ? (
+                      {editingUser && editingUser.id === user.id ? (
                         <div className="edit-field">
                           <input
                             type="text"
@@ -141,7 +164,7 @@ const UserList = ({ refresh, showNotification }) => {
                       )}
                     </td>
                     <td className="table-cell email-cell">
-                      {editingUser && editingUser._id === user._id ? (
+                      {editingUser && editingUser.id === user.id ? (
                         <div className="edit-field">
                           <input
                             type="email"
@@ -160,7 +183,7 @@ const UserList = ({ refresh, showNotification }) => {
                       )}
                     </td>
                     <td className="table-cell actions-cell">
-                      {editingUser && editingUser._id === user._id ? (
+                      {editingUser && editingUser.id === user.id ? (
                         <div className="edit-actions">
                           <button onClick={saveEdit} className="save-btn" title="Lưu">
                             💾 Lưu
@@ -174,7 +197,7 @@ const UserList = ({ refresh, showNotification }) => {
                           <button onClick={() => startEdit(user)} className="edit-btn" title="Chỉnh sửa">
                             ✏️ Sửa
                           </button>
-                          <button onClick={() => handleDelete(user._id)} className="delete-btn" title="Xóa">
+                          <button onClick={() => handleDelete(user.id)} className="delete-btn" title="Xóa">
                             🗑️ Xóa
                           </button>
                         </div>
