@@ -34,6 +34,19 @@ const useValidation = () => {
     return '';
   };
 
+  const validatePassword = (password) => {
+    if (!password || !password.trim()) {
+      return 'Mật khẩu không được để trống';
+    }
+    if (password.length < 6) {
+      return 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
+    if (password.length > 50) {
+      return 'Mật khẩu không được quá 50 ký tự';
+    }
+    return '';
+  };
+
   // Validate single field
   const validateField = (field, value) => {
     let error = '';
@@ -43,6 +56,9 @@ const useValidation = () => {
         break;
       case 'email':
         error = validateEmail(value);
+        break;
+      case 'password':
+        error = validatePassword(value);
         break;
       default:
         break;
