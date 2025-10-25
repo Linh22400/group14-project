@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import authService from '../services/authService';
+import { useNotification } from '../contexts/NotificationContext';
 import './Auth.css';
 
 const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
+  const { showNotification } = useNotification();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -69,6 +71,9 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
     const formErrors = validateForm();
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors);
+      // Hiển thị thông báo lỗi đầu tiên
+      const firstError = Object.values(formErrors)[0];
+      showNotification(firstError, 'error');
       return;
     }
 
@@ -89,8 +94,11 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
         
         // Gọi callback để thông báo đăng ký thành công
         onRegisterSuccess(response.data.data.user);
+        showNotification('Đăng ký thành công! 🎉', 'success');
       } else {
-        setErrors({ general: response.data.message || 'Đăng ký thất bại' });
+        const errorMsg = response.data.message || 'Đăng ký thất bại';
+        setErrors({ general: errorMsg });
+        showNotification(errorMsg, 'error');
       }
     } catch (error) {
       console.error('Lỗi đăng ký:', error);
@@ -108,6 +116,8 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
       } else {
         setErrors({ general: errorMessage });
       }
+      
+      showNotification(errorMessage, 'error');
     } finally {
       setLoading(false);
     }

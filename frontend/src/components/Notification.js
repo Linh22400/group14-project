@@ -2,22 +2,27 @@ import React, { useEffect, useState } from 'react';
 
 const Notification = ({ message, type = 'error', duration = 3000, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
     if (message) {
       setIsVisible(true);
+      setIsExiting(false);
       const timer = setTimeout(() => {
-        setIsVisible(false);
-        if (onClose) onClose();
+        handleClose();
       }, duration);
       return () => clearTimeout(timer);
     }
-  }, [message, duration, onClose]);
+  }, [message, duration]);
 
-  // Reset visible state when message changes
-  useEffect(() => {
-    setIsVisible(!!message);
-  }, [message]);
+  const handleClose = () => {
+    setIsExiting(true);
+    // Wait for exit animation then call onClose
+    setTimeout(() => {
+      setIsVisible(false);
+      if (onClose) onClose();
+    }, 300);
+  };
 
   if (!message || !isVisible) return null;
 
@@ -81,15 +86,12 @@ const Notification = ({ message, type = 'error', duration = 3000, onClose }) => 
       alignItems: 'center',
       gap: '10px',
       minWidth: '300px',
-      animation: 'slideIn 0.3s ease-out',
+      animation: isExiting ? 'slideOut 0.3s ease-in forwards' : 'slideIn 0.3s ease-out',
     }}>
       <span style={{ fontSize: '1.2rem' }}>{getIcon()}</span>
       <span style={{ flex: 1, fontSize: '0.9rem' }}>{message}</span>
       <button 
-        onClick={() => {
-          setIsVisible(false);
-          if (onClose) onClose();
-        }}
+        onClick={handleClose}
         style={{
           background: 'none',
           border: 'none',
@@ -112,6 +114,17 @@ const Notification = ({ message, type = 'error', duration = 3000, onClose }) => 
           to {
             transform: translateX(0);
             opacity: 1;
+          }
+        }
+        
+        @keyframes slideOut {
+          from {
+            transform: translateX(0);
+            opacity: 1;
+          }
+          to {
+            transform: translateX(100%);
+            opacity: 0;
           }
         }
       `}</style>

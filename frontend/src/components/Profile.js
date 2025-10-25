@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import profileService from '../services/profileService';
 import authService from '../services/authService';
+import { useNotification } from '../contexts/NotificationContext';
 import './Profile.css';
 
 const Profile = ({ onUpdateClick }) => {
+  const { showNotification } = useNotification();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -91,20 +93,28 @@ const Profile = ({ onUpdateClick }) => {
       authService.setUser(updatedUser);
 
       // Thông báo thành công
+      showNotification('Cập nhật avatar thành công! ✅', 'success');
       setError(''); // Clear any previous errors
       
     } catch (error) {
-      setError(error.message || 'Có lỗi xảy ra khi upload avatar');
+      const errorMsg = error.message || 'Có lỗi xảy ra khi upload avatar';
+      setError(errorMsg);
       console.error('Lỗi upload avatar:', error);
       
       // Hiển thị thông báo chi tiết hơn cho người dùng
+      let userErrorMsg = errorMsg;
       if (error.message.includes('Unexpected token')) {
-        setError('Lỗi kết nối server. Vui lòng thử lại sau.');
+        userErrorMsg = 'Lỗi kết nối server. Vui lòng thử lại sau.';
+        setError(userErrorMsg);
       } else if (error.message.includes('NetworkError')) {
-        setError('Lỗi mạng. Vui lòng kiểm tra kết nối internet.');
+        userErrorMsg = 'Lỗi mạng. Vui lòng kiểm tra kết nối internet.';
+        setError(userErrorMsg);
       } else if (error.message.includes('413')) {
-        setError('File quá lớn. Vui lòng chọn ảnh nhỏ hơn 5MB.');
+        userErrorMsg = 'File quá lớn. Vui lòng chọn ảnh nhỏ hơn 5MB.';
+        setError(userErrorMsg);
       }
+      
+      showNotification(userErrorMsg, 'error');
     } finally {
       setUploading(false);
     }

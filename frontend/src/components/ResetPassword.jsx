@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
+import { useNotification } from '../contexts/NotificationContext';
 import './ResetPassword.css';
 
 const ResetPassword = () => {
+  const { showNotification } = useNotification();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,12 +21,16 @@ const ResetPassword = () => {
 
     // Kiểm tra mật khẩu
     if (password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự');
+      const errorMsg = 'Mật khẩu phải có ít nhất 6 ký tự';
+      setError(errorMsg);
+      showNotification(errorMsg, 'error');
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp');
+      const errorMsg = 'Mật khẩu xác nhận không khớp';
+      setError(errorMsg);
+      showNotification(errorMsg, 'error');
       return;
     }
 
@@ -32,14 +38,18 @@ const ResetPassword = () => {
 
     try {
       const response = await authService.resetPassword(token, password);
-      setMessage(response.message || 'Đặt lại mật khẩu thành công!');
+      const successMsg = response.message || 'Đặt lại mật khẩu thành công!';
+      setMessage(successMsg);
+      showNotification(successMsg, 'success');
       
       // Chuyển hướng về trang login sau 2 giây
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Có lỗi xảy ra khi đặt lại mật khẩu.');
+      const errorMsg = err.message || 'Có lỗi xảy ra khi đặt lại mật khẩu.';
+      setError(errorMsg);
+      showNotification(errorMsg, 'error');
     } finally {
       setLoading(false);
     }

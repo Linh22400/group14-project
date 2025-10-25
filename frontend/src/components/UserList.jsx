@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import useValidation from '../hooks/useValidation';
 import authService from '../services/authService';
+import { useNotification } from '../contexts/NotificationContext';
 
-const UserList = ({ refresh, showNotification }) => {
+const UserList = ({ refresh }) => {
+  const { showNotification } = useNotification();
   const [users, setUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
   const [editName, setEditName] = useState('');
@@ -35,7 +37,20 @@ const UserList = ({ refresh, showNotification }) => {
 
   useEffect(() => {
     fetchUsers();
-  }, [refresh]);
+  }, []);
+
+  // Lắng nghe sự kiện userAdded để refresh danh sách
+  useEffect(() => {
+    const handleUserAdded = () => {
+      fetchUsers();
+    };
+    
+    window.addEventListener('userAdded', handleUserAdded);
+    
+    return () => {
+      window.removeEventListener('userAdded', handleUserAdded);
+    };
+  }, []);
 
   // Xóa user
   const handleDelete = async (userId) => {

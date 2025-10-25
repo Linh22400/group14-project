@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const { sendResetPasswordEmail } = require('../services/emailService');
 
-// Quên mật khẩu - gửi mã xác nhận 4 chữ số
+// Quên mật khẩu - gửi token reset password qua email
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -23,21 +23,24 @@ exports.forgotPassword = async (req, res) => {
       });
     }
 
-    // Tạo mã xác nhận 4 chữ số
-    const resetCode = Math.floor(1000 + Math.random() * 9000).toString();
-    const resetCodeExpiry = Date.now() + 10 * 60 * 1000; // 10 phút
+    // Tạo token reset password (sử dụng crypto để tạo token an toàn)
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetPasswordExpiry = Date.now() + 60 * 60 * 1000; // 1 giờ
 
-    // Lưu mã vào database
-    user.resetCode = resetCode;
-    user.resetCodeExpiry = resetCodeExpiry;
+    // Lưu token vào database
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpiry = resetPasswordExpiry;
     await user.save();
 
-    // Gửi email với mã 4 chữ số
-    await sendResetPasswordEmail(user.email, resetCode);
+    // Tạo link reset password (frontend URL)
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/reset-password/${resetToken}`;
+
+    // Gửi email với link reset password
+    await sendResetPasswordEmail(user.email, resetUrl);
     
     res.json({
       success: true,
-      message: 'Mã xác nhận 4 chữ số đã được gửi đến email của bạn. Mã sẽ hết hạn sau 10 phút.'
+      message: 'Link đặt lại mật khẩu đã được gửi đến email của bạn. Link sẽ hết hạn sau 1 giờ.'
     });
 
   } catch (error) {

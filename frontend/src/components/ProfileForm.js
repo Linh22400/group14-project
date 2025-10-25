@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import profileService from '../services/profileService';
+import { useNotification } from '../contexts/NotificationContext';
 import './ProfileForm.css';
 
 const ProfileForm = ({ user, onSave, onCancel }) => {
+  const { showNotification } = useNotification();
   const [formData, setFormData] = useState({
     name: '',
     email: ''
@@ -66,7 +68,9 @@ const ProfileForm = ({ user, onSave, onCancel }) => {
       
       const response = await profileService.updateProfile(formData);
       
-      setSuccessMessage('Cập nhật thông tin thành công!');
+      const successMsg = 'Cập nhật thông tin thành công!';
+      setSuccessMessage(successMsg);
+      showNotification(successMsg, 'success');
       
       // Gọi callback onSave để cập nhật parent component
       if (onSave) {
@@ -82,9 +86,13 @@ const ProfileForm = ({ user, onSave, onCancel }) => {
       console.error('Lỗi khi cập nhật profile:', error);
       
       if (error.message.includes('Email đã được sử dụng')) {
-        setErrors({ email: 'Email này đã được sử dụng bởi người dùng khác' });
+        const errorMsg = 'Email này đã được sử dụng bởi người dùng khác';
+        setErrors({ email: errorMsg });
+        showNotification(errorMsg, 'error');
       } else {
-        setErrors({ general: error.message || 'Có lỗi xảy ra khi cập nhật thông tin' });
+        const errorMsg = error.message || 'Có lỗi xảy ra khi cập nhật thông tin';
+        setErrors({ general: errorMsg });
+        showNotification(errorMsg, 'error');
       }
     } finally {
       setLoading(false);

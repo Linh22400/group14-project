@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import useValidation from '../hooks/useValidation';
+import { useNotification } from '../contexts/NotificationContext';
 
-const AddUser = ({ onUserAdded, showNotification }) => {
+const AddUser = ({ onUserAdded }) => {
+  const { showNotification } = useNotification();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,9 +31,8 @@ const AddUser = ({ onUserAdded, showNotification }) => {
       setEmail('');
       setPassword('');
       
-      if (onUserAdded) {
-        onUserAdded();
-      }
+      // Emit custom event để UserList biết cần refresh
+      window.dispatchEvent(new CustomEvent('userAdded'));
     } catch (error) {
       console.error('Lỗi khi thêm người dùng:', error);
       showNotification('Có lỗi xảy ra khi thêm người dùng! Vui lòng thử lại.', 'error');

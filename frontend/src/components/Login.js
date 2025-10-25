@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import authService from '../services/authService';
+import { useNotification } from '../contexts/NotificationContext';
 import './Auth.css';
 
 const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
+  const { showNotification } = useNotification();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -35,15 +37,17 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
         
         // Gọi callback để thông báo đăng nhập thành công
         onLoginSuccess(response.data.data.user);
+        showNotification('Đăng nhập thành công! 🎉', 'success');
       } else {
-        setError(response.data.message || 'Đăng nhập thất bại');
+        const errorMsg = response.data.message || 'Đăng nhập thất bại';
+        setError(errorMsg);
+        showNotification(errorMsg, 'error');
       }
     } catch (error) {
       console.error('Lỗi đăng nhập:', error);
-      setError(
-        error.response?.data?.message || 
-        'Không thể kết nối đến server. Vui lòng thử lại sau.'
-      );
+      const errorMsg = error.response?.data?.message || 'Không thể kết nối đến server. Vui lòng thử lại sau.';
+      setError(errorMsg);
+      showNotification(errorMsg, 'error');
     } finally {
       setLoading(false);
     }

@@ -78,21 +78,41 @@ class AuthService {
   }
 
   // Đặt lại mật khẩu
-  async resetPassword(token, password) {
-    const response = await fetch('http://localhost:3000/api/auth/reset-password', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ token, password })
-    });
+  async resetPassword(token, newPassword) {
+    try {
+      const response = await fetch('http://localhost:3000/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ token, newPassword })
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Có lỗi xảy ra');
+      if (!response.ok) {
+        let errorMessage = 'Có lỗi xảy ra khi đặt lại mật khẩu';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (jsonError) {
+          // Nếu không parse được JSON, lấy text hoặc status
+          try {
+            const text = await response.text();
+            errorMessage = text || `Lỗi ${response.status}: ${response.statusText}`;
+          } catch (textError) {
+            errorMessage = `Lỗi ${response.status}: ${response.statusText}`;
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error('Có lỗi xảy ra khi kết nối với server');
+      }
     }
-
-    return await response.json();
   }
 
   // Xác thực mã 4 chữ số và đặt lại mật khẩu

@@ -2,7 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import UserList from './components/UserList';
 import AddUser from './components/AddUser';
-import Notification from './components/Notification';
+import NotificationContainer from './components/NotificationContainer';
+import { NotificationProvider } from './contexts/NotificationContext';
 import Login from './components/Login';
 import Register from './components/Register';
 import UserInfo from './components/UserInfo';
@@ -14,8 +15,6 @@ import authService from './services/authService';
 import './App.css';
 
 function App() {
-  const [refresh, setRefresh] = React.useState(false);
-  const [notification, setNotification] = React.useState(null);
   const [currentUser, setCurrentUser] = React.useState(null);
 
   // Kiểm tra đăng nhập khi component mount
@@ -26,32 +25,17 @@ function App() {
     }
   }, []);
 
-  const handleUserAdded = () => {
-    setRefresh(!refresh); // Trigger re-render để refresh danh sách
-  };
-
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
-    showNotification('Đăng nhập thành công!', 'success');
   };
 
   const handleRegisterSuccess = (user) => {
     setCurrentUser(user);
-    showNotification('Đăng ký thành công!', 'success');
   };
 
   const handleLogout = () => {
     authService.logout();
     setCurrentUser(null);
-    showNotification('Đăng xuất thành công!', 'success');
-  };
-
-  const showNotification = (message, type = 'success') => {
-    setNotification({ message, type });
-  };
-
-  const hideNotification = () => {
-    setNotification(null);
   };
 
   // Protected Route Component
@@ -143,104 +127,94 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="App">
-        {notification && (
-          <Notification 
-            message={notification.message} 
-            type={notification.type}
-            onClose={hideNotification}
-          />
-        )}
-        
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={
-            <PublicRoute>
-              <Login 
-                onLoginSuccess={handleLoginSuccess}
-              />
-            </PublicRoute>
-          } />
+    <NotificationProvider>
+      <Router>
+        <div className="App">
+          <NotificationContainer />
           
-          <Route path="/register" element={
-            <PublicRoute>
-              <Register 
-                onRegisterSuccess={handleRegisterSuccess}
-              />
-            </PublicRoute>
-          } />
-          
-          <Route path="/forgot-password" element={
-            <PublicRoute>
-              <ForgotPassword />
-            </PublicRoute>
-          } />
-          
-          <Route path="/reset-password/:token" element={
-            <PublicRoute>
-              <ResetPassword />
-            </PublicRoute>
-          } />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={
+              <PublicRoute>
+                <Login 
+                  onLoginSuccess={handleLoginSuccess}
+                />
+              </PublicRoute>
+            } />
+            
+            <Route path="/register" element={
+              <PublicRoute>
+                <Register 
+                  onRegisterSuccess={handleRegisterSuccess}
+                />
+              </PublicRoute>
+            } />
+            
+            <Route path="/forgot-password" element={
+              <PublicRoute>
+                <ForgotPassword />
+              </PublicRoute>
+            } />
+            
+            <Route path="/reset-password/:token" element={
+              <PublicRoute>
+                <ResetPassword />
+              </PublicRoute>
+            } />
 
-          {/* Protected Routes */}
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Layout>
-                <div className="content-grid">
-                  {currentUser?.role === 'admin' && (
-                    <section className="add-user-section">
-                      <div className="section-card">
-                        <h2 className="section-title">Thêm Người Dùng Mới</h2>
-                        <AddUser onUserAdded={handleUserAdded} showNotification={showNotification} />
-                      </div>
-                    </section>
-                  )}
-                  
-                  {currentUser?.role === 'admin' && (
-                    <section className="user-list-section">
-                      <div className="section-card">
-                        <h2 className="section-title">Danh Sách Người Dùng</h2>
-                        <UserList refresh={refresh} showNotification={showNotification} />
-                      </div>
-                    </section>
-                  )}
-                  
-                  {currentUser?.role !== 'admin' && (
-                    <section className="welcome-section">
-                      <div className="section-card">
-                        <h2 className="section-title">Chào mừng {currentUser?.name}!</h2>
-                        <p>Bạn đã đăng nhập thành công. Hãy nhấn vào Profile ở menu trên cùng để xem thông tin cá nhân.</p>
-                      </div>
-                    </section>
-                  )}
-                </div>
-              </Layout>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Layout>
-                <ProfilePage />
-              </Layout>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/admin" element={
-            <ProtectedRoute>
-              {currentUser?.role === 'admin' ? (
+            {/* Protected Routes */}
+            <Route path="/" element={
+              <ProtectedRoute>
                 <Layout>
-                  <AdminDashboard />
+                  <div className="content-grid">
+                    {currentUser?.role === 'admin' && (
+                      <section className="add-user-section">
+                        <div className="section-card">
+                          <h2 className="section-title">Thêm Người Dùng Mới</h2>
+                          <AddUser />
+                        </div>
+                      </section>
+                    )}
+                    
+                    {currentUser?.role === 'admin' && (
+                      <section className="user-list-section">
+                        <div className="section-card">
+                          <h2 className="section-title">Danh Sách Người Dùng</h2>
+                          <UserList />
+                        </div>
+                      </section>
+                    )}
+                    
+                    {currentUser?.role !== 'admin' && (
+                      <section className="welcome-section">
+                        <div className="section-card">
+                          <h2 className="section-title">Chào mừng {currentUser?.name}!</h2>
+                          <p>Bạn đã đăng nhập thành công. Hãy nhấn vào Profile ở menu trên cùng để xem thông tin cá nhân.</p>
+                        </div>
+                      </section>
+                    )}
+                  </div>
                 </Layout>
-              ) : (
-                <Navigate to="/" />
-              )}
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </div>
-    </Router>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ProfilePage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </div>
+      </Router>
+    </NotificationProvider>
   );
 }
 
