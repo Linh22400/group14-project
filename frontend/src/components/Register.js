@@ -88,8 +88,9 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
       });
       
       if (response.data.success) {
-        // Lưu token và thông tin user
-        authService.setToken(response.data.data.token);
+        // Lưu access token, refresh token và thông tin user
+        authService.setAccessToken(response.data.data.accessToken);
+        authService.setRefreshToken(response.data.data.refreshToken);
         authService.setUser(response.data.data.user);
         
         // Gọi callback để thông báo đăng ký thành công

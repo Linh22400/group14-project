@@ -1,11 +1,40 @@
 const User = require('../models/User');
+const RefreshToken = require('../models/RefreshToken');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
-// Tạo JWT token
-const generateToken = (userId) => {
+// Cấu hình token
+const ACCESS_TOKEN_EXPIRY = '15m'; // Access token hết hạn sau 15 phút
+const REFRESH_TOKEN_EXPIRY_DAYS = 7; // Refresh token hết hạn sau 7 ngày
+
+// Tạo JWT access token
+const generateAccessToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET || 'fallback-secret-key', {
-    expiresIn: '7d' // Token hết hạn sau 7 ngày
+    expiresIn: ACCESS_TOKEN_EXPIRY
   });
+};
+
+// Tạo refresh token ngẫu nhiên
+const generateRefreshToken = () => {
+  return crypto.randomBytes(64).toString('hex');
+};
+
+// Tạo refresh token và lưu vào database
+const createRefreshToken = async (userId, userAgent = '', ipAddress = '') => {
+  const token = generateRefreshToken();
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+
+  const refreshToken = new RefreshToken({
+    token,
+    userId,
+    expiresAt,
+    userAgent,
+    ipAddress
+  });
+
+  await refreshToken.save();
+  return token;
 };
 
 // Đăng ký người dùng mới
@@ -56,8 +85,13 @@ exports.signup = async (req, res) => {
 
     await newUser.save();
 
-    // Tạo token
-    const token = generateToken(newUser._id);
+    // Lấy thông tin device để tạo refresh token
+    const userAgent = req.headers['user-agent'] || '';
+    const ipAddress = req.ip || req.connection.remoteAddress || '';
+
+    // Tạo access token và refresh token
+    const accessToken = generateAccessToken(newUser._id);
+    const refreshToken = await createRefreshToken(newUser._id, userAgent, ipAddress);
 
     res.status(201).json({
       success: true,
@@ -69,7 +103,8 @@ exports.signup = async (req, res) => {
           email: newUser.email,
           role: newUser.role
         },
-        token: token
+        accessToken: accessToken,
+        refreshToken: refreshToken
       }
     });
 
@@ -78,6 +113,69 @@ exports.signup = async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Lỗi server khi đăng ký' 
+    });
+  }
+};
+
+// Refresh access token
+exports.refresh = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token là bắt buộc'
+      });
+    }
+
+    // Tìm refresh token trong database
+    const storedToken = await RefreshToken.findOne({
+      token: refreshToken
+    }).populate('userId');
+
+    if (!storedToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token không hợp lệ'
+      });
+    }
+
+    // Kiểm tra token có bị thu hồi không
+    if (storedToken.isRevoked) {
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token đã bị thu hồi'
+      });
+    }
+
+    // Kiểm tra token còn hạn không
+    if (storedToken.isExpired()) {
+      // Xóa token hết hạn
+      await RefreshToken.deleteOne({ _id: storedToken._id });
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token đã hết hạn'
+      });
+    }
+
+    // Tạo access token mới
+    const newAccessToken = generateAccessToken(storedToken.userId._id);
+
+    res.json({
+      success: true,
+      message: 'Refresh token thành công',
+      data: {
+        accessToken: newAccessToken,
+        refreshToken: refreshToken // Trả về refresh token cũ vẫn còn hạn
+      }
+    });
+
+  } catch (error) {
+    console.error('Lỗi refresh token:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi refresh token'
     });
   }
 };
@@ -113,8 +211,13 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Tạo token
-    const token = generateToken(user._id);
+    // Lấy thông tin device để tạo refresh token
+    const userAgent = req.headers['user-agent'] || '';
+    const ipAddress = req.ip || req.connection.remoteAddress || '';
+
+    // Tạo access token và refresh token
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = await createRefreshToken(user._id, userAgent, ipAddress);
 
     res.json({
       success: true,
@@ -126,7 +229,8 @@ exports.login = async (req, res) => {
           email: user.email,
           role: user.role
         },
-        token: token
+        accessToken: accessToken,
+        refreshToken: refreshToken
       }
     });
 
@@ -142,9 +246,10 @@ exports.login = async (req, res) => {
 // Đăng xuất
 exports.logout = async (req, res) => {
   try {
-    // Ở phía server, chúng ta không cần xử lý gì đặc biệt
-    // vì JWT token được lưu ở phía client
-    // Client sẽ xóa token khi đăng xuất
+    // Thu hồi tất cả refresh tokens của user
+    if (req.user && req.user._id) {
+      await RefreshToken.revokeAllUserTokens(req.user._id);
+    }
     
     res.json({
       success: true,
@@ -172,7 +277,20 @@ exports.authenticate = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key');
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key');
+    } catch (jwtError) {
+      if (jwtError.name === 'TokenExpiredError') {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Access token đã hết hạn',
+          code: 'TOKEN_EXPIRED'
+        });
+      }
+      throw jwtError;
+    }
+
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {

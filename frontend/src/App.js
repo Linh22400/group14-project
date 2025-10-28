@@ -16,6 +16,7 @@ import './App.css';
 
 function App() {
   const [currentUser, setCurrentUser] = React.useState(null);
+  const [navigationKey, setNavigationKey] = React.useState(0); // Key để force re-render Navigation
 
   // Kiểm tra đăng nhập khi component mount
   React.useEffect(() => {
@@ -23,10 +24,65 @@ function App() {
     if (user) {
       setCurrentUser(user);
     }
+
+    // // Lắng nghe sự kiện userRoleUpdated
+    const handleUserRoleUpdated = (event) => {
+      if (event.detail && event.detail.user) {
+        setCurrentUser(event.detail.user);
+        // Force re-render Navigation bằng cách thay đổi key
+        setNavigationKey(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('userRoleUpdated', handleUserRoleUpdated);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('userRoleUpdated', handleUserRoleUpdated);
+    };
   }, []);
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
+  };
+
+  // Function to refresh current user data
+  const refreshCurrentUser = async () => {
+    try {
+      const token = authService.getToken();
+      if (token) {
+        const response = await fetch('http://localhost:3000/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user) {
+            authService.setUser(data.user);
+            setCurrentUser(data.user);
+            // Dispatch custom event để thông báo cho các components khác
+            window.dispatchEvent(new CustomEvent('userRoleUpdated', { 
+              detail: { user: data.user } 
+            }));
+            return data.user;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Lỗi khi refresh user data:', error);
+    }
+    return null;
+  };
+
+  // Function to update current user role locally
+  const updateCurrentUserRole = (newRole) => {
+    const updatedUser = authService.updateUserRole(newRole);
+    if (updatedUser) {
+      setCurrentUser(updatedUser);
+    }
   };
 
   const handleRegisterSuccess = (user) => {
@@ -49,7 +105,10 @@ function App() {
   };
 
   // Layout Component cho các protected routes
-  const Layout = ({ children }) => {
+  const Layout = ({ children, currentUser }) => {
+    const location = useLocation();
+    const isAdminPage = location.pathname === '/admin';
+    
     return (
       <div className="main-app">
         {/* Header với navigation */}
@@ -64,7 +123,7 @@ function App() {
                 <p className="app-subtitle">Hệ thống quản lý người dùng hiện đại</p>
               </div>
               <div className="header-nav">
-                <Navigation />
+                <Navigation key={navigationKey} currentUser={currentUser} />
                 <UserInfo user={currentUser} onLogout={handleLogout} />
               </div>
             </div>
@@ -78,17 +137,20 @@ function App() {
           </div>
         </main>
         
-        <footer className="app-footer">
-          <div className="container">
-            <p>&copy; 2024 Quản Lý Người Dùng. Phát triển bởi React.</p>
-          </div>
-        </footer>
+        {/* Hide footer on admin page */}
+        {!isAdminPage && (
+          <footer className="app-footer">
+            <div className="container">
+              <p>&copy; 2024 Quản Lý Người Dùng. Phát triển bởi React.</p>
+            </div>
+          </footer>
+        )}
       </div>
     );
   };
 
   // Navigation Component
-  const Navigation = () => {
+  const Navigation = ({ currentUser }) => {
     const navigate = useNavigate();
     const location = useLocation();
     
@@ -126,6 +188,23 @@ function App() {
     );
   };
 
+  // Auth Wrapper Component
+  const AuthWrapper = ({ children }) => {
+    const navigate = useNavigate();
+    
+    const childrenWithProps = React.Children.map(children, child => {
+      if (React.isValidElement(child)) {
+        return React.cloneElement(child, {
+          onSwitchToRegister: () => navigate('/register'),
+          onSwitchToLogin: () => navigate('/login')
+        });
+      }
+      return child;
+    });
+    
+    return <>{childrenWithProps}</>;
+  };
+
   return (
     <NotificationProvider>
       <Router>
@@ -136,17 +215,17 @@ function App() {
             {/* Public Routes */}
             <Route path="/login" element={
               <PublicRoute>
-                <Login 
-                  onLoginSuccess={handleLoginSuccess}
-                />
+                <AuthWrapper>
+                  <Login onLoginSuccess={handleLoginSuccess} />
+                </AuthWrapper>
               </PublicRoute>
             } />
             
             <Route path="/register" element={
               <PublicRoute>
-                <Register 
-                  onRegisterSuccess={handleRegisterSuccess}
-                />
+                <AuthWrapper>
+                  <Register onRegisterSuccess={handleRegisterSuccess} />
+                </AuthWrapper>
               </PublicRoute>
             } />
             
@@ -165,7 +244,7 @@ function App() {
             {/* Protected Routes */}
             <Route path="/" element={
               <ProtectedRoute>
-                <Layout>
+                <Layout currentUser={currentUser} onLogout={handleLogout}>
                   <div className="content-grid">
                     {currentUser?.role === 'admin' && (
                       <section className="add-user-section">
@@ -200,7 +279,7 @@ function App() {
 
             <Route path="/profile" element={
               <ProtectedRoute>
-                <Layout>
+                <Layout currentUser={currentUser} onLogout={handleLogout}>
                   <ProfilePage />
                 </Layout>
               </ProtectedRoute>
@@ -208,7 +287,12 @@ function App() {
 
             <Route path="/admin" element={
               <ProtectedRoute>
-                <AdminDashboard />
+                <Layout currentUser={currentUser} onLogout={handleLogout} hideFooter={true}>
+                  <AdminDashboard 
+                    onUserRoleUpdate={refreshCurrentUser}
+                    updateCurrentUserRole={updateCurrentUserRole}
+                  />
+                </Layout>
               </ProtectedRoute>
             } />
           </Routes>
