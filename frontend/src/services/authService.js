@@ -16,7 +16,7 @@ class AuthService {
 
   // Lấy access token từ localStorage
   getAccessToken() {
-    return localStorage.getItem('accessToken');
+    return this.accessToken || localStorage.getItem('accessToken');
   }
 
   // Xóa access token khỏi localStorage

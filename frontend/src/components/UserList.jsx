@@ -18,10 +18,12 @@ const UserList = ({ refresh }) => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/users', {
-        headers: authService.getAuthHeaders()
+      const response = await axios.get('http://localhost:3000/api/admin/users', {
+        headers: {
+          'Authorization': `Bearer ${authService.getAccessToken()}`
+        }
       });
-      setUsers(response.data);
+      setUsers(response.data.data || []);
     } catch (error) {
       console.error('Lỗi khi lấy danh sách users:', error);
       if (error.response?.status === 401) {
@@ -70,8 +72,10 @@ const UserList = ({ refresh }) => {
   const handleDelete = async (userId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
       try {
-        await axios.delete(`http://localhost:3000/api/users/${userId}`, {
-          headers: authService.getAuthHeaders()
+        await axios.delete(`http://localhost:3000/api/admin/users/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${authService.getAccessToken()}`
+          }
         });
         fetchUsers(); // Refresh danh sách
         showNotification('Xóa người dùng thành công! ✅', 'success');
@@ -94,11 +98,37 @@ const UserList = ({ refresh }) => {
   };
 
   // Bắt đầu chỉnh sửa
+  // Helper functions để hiển thị role giống RoleManagement
+  const getRoleColor = (role) => {
+    switch (role) {
+      case 'admin':
+        return '#e74c3c'; // Đỏ
+      case 'moderator':
+        return '#f39c12'; // Cam
+      case 'user':
+        return '#3498db'; // Xanh dương
+      default:
+        return '#95a5a6'; // Xám
+    }
+  };
+
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'admin':
+        return '👑 Quản trị viên';
+      case 'moderator':
+        return '👮‍♀️ Kiểm duyệt viên';
+      case 'user':
+        return '👤 Người dùng';
+      default:
+        return role;
+    }
+  };
+
   const startEdit = (user) => {
     setEditingUser(user);
     setEditName(user.name);
     setEditEmail(user.email);
-    // Không cần set editRole nữa vì không cho phép sửa vai trò
   };
 
   // Hủy chỉnh sửa
@@ -118,12 +148,14 @@ const UserList = ({ refresh }) => {
     }
 
     try {
-      await axios.put(`http://localhost:3000/api/users/${editingUser.id}`, {
+      await axios.put(`http://localhost:3000/api/admin/users/${editingUser.id}`, {
         name: editName.trim(),
         email: editEmail.trim()
         // Không gửi role nữa
       }, {
-        headers: authService.getAuthHeaders()
+        headers: {
+          'Authorization': `Bearer ${authService.getAccessToken()}`
+        }
       });
       fetchUsers(); // Refresh danh sách
       cancelEdit();
@@ -226,8 +258,11 @@ const UserList = ({ refresh }) => {
                       )}
                     </td>
                     <td className="table-cell role-cell">
-                      <span className={`role-badge ${user.role}`}>
-                        {user.role === 'admin' ? '👑 Quản trị viên' : '👤 Người dùng'}
+                      <span 
+                        className={`role-badge ${user.role}`}
+                        style={{ backgroundColor: getRoleColor(user.role) }}
+                      >
+                        {getRoleDisplayName(user.role)}
                       </span>
                     </td>
                     <td className="table-cell actions-cell">
@@ -453,6 +488,12 @@ const UserList = ({ refresh }) => {
           box-shadow: 0 2px 8px rgba(238, 90, 36, 0.3);
         }
         
+        .role-badge.moderator {
+          background: linear-gradient(135deg, #f39c12, #e67e22);
+          color: white;
+          box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+        }
+        
         .role-badge.user {
           background: linear-gradient(135deg, #74b9ff, #0984e3);
           color: white;
@@ -558,6 +599,11 @@ const UserList = ({ refresh }) => {
           
           .role-cell {
             min-width: 120px;
+          }
+          
+          .role-badge {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.6rem;
           }
           
           .actions-cell {

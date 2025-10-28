@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import useValidation from '../hooks/useValidation';
 import { useNotification } from '../contexts/NotificationContext';
+import adminService from '../services/adminService';
 
 const AddUser = ({ onUserAdded }) => {
   const { showNotification } = useNotification();
@@ -24,7 +24,7 @@ const AddUser = ({ onUserAdded }) => {
     
     try {
       const newUser = { name: name.trim(), email: email.trim(), password: password.trim() };
-      await axios.post('http://localhost:3000/api/users', newUser);
+      await adminService.createUser(newUser);
       
       showNotification('Thêm người dùng thành công! 🎉', 'success');
       setName('');
@@ -33,9 +33,19 @@ const AddUser = ({ onUserAdded }) => {
       
       // Emit custom event để UserList biết cần refresh
       window.dispatchEvent(new CustomEvent('userAdded'));
+      
+      // Gọi callback nếu có
+      if (onUserAdded) {
+        onUserAdded();
+      }
     } catch (error) {
       console.error('Lỗi khi thêm người dùng:', error);
-      showNotification('Có lỗi xảy ra khi thêm người dùng! Vui lòng thử lại.', 'error');
+      // Xử lý lỗi token và hiển thị thông báo rõ ràng hơn
+      if (error.message && error.message.includes('Token không hợp lệ')) {
+        showNotification('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!', 'error');
+      } else {
+        showNotification(error.message || 'Có lỗi xảy ra khi thêm người dùng! Vui lòng thử lại.', 'error');
+      }
     } finally {
       setIsSubmitting(false);
     }
