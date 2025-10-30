@@ -39,6 +39,16 @@
   margin-bottom: 20px;
 }
 
+.form-group.avatar-group {
+  margin-bottom: 25px;
+}
+
+.form-group.avatar-group label {
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #495057;
+}
+
 .form-group label {
   display: block;
   margin-bottom: 8px;

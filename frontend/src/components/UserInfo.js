@@ -6,7 +6,7 @@ const UserInfo = ({ user, onLogout }) => {
   const handleLogout = async () => {
     try {
       // Gọi API logout (tùy chọn)
-      const token = authService.getToken();
+      const token = authService.getAccessToken();
       if (token) {
         await fetch('http://localhost:3000/api/auth/logout', {
           method: 'POST',

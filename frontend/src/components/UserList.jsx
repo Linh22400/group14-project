@@ -10,6 +10,7 @@ const UserList = ({ refresh }) => {
   const [editingUser, setEditingUser] = useState(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
+  // Không cần editRole nữa vì không cho phép sửa vai trò
   const [loading, setLoading] = useState(true);
   const { errors, validateField, validateAll, clearError } = useValidation();
 
@@ -17,10 +18,12 @@ const UserList = ({ refresh }) => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/users', {
-        headers: authService.getAuthHeaders()
+      const response = await axios.get('http://localhost:3000/api/admin/users', {
+        headers: {
+          'Authorization': `Bearer ${authService.getAccessToken()}`
+        }
       });
-      setUsers(response.data);
+      setUsers(response.data.data || []);
     } catch (error) {
       console.error('Lỗi khi lấy danh sách users:', error);
       if (error.response?.status === 401) {
@@ -52,15 +55,35 @@ const UserList = ({ refresh }) => {
     };
   }, []);
 
+  // Lắng nghe sự kiện userRoleUpdated để refresh danh sách khi vai trò thay đổi
+  useEffect(() => {
+    const handleUserRoleUpdated = () => {
+      fetchUsers();
+    };
+    
+    window.addEventListener('userRoleUpdated', handleUserRoleUpdated);
+    
+    return () => {
+      window.removeEventListener('userRoleUpdated', handleUserRoleUpdated);
+    };
+  }, []);
+
   // Xóa user
   const handleDelete = async (userId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
       try {
-        await axios.delete(`http://localhost:3000/api/users/${userId}`, {
-          headers: authService.getAuthHeaders()
+        await axios.delete(`http://localhost:3000/api/admin/users/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${authService.getAccessToken()}`
+          }
         });
         fetchUsers(); // Refresh danh sách
         showNotification('Xóa người dùng thành công! ✅', 'success');
+        
+        // Phát sự kiện để thông báo người dùng đã bị xóa
+        window.dispatchEvent(new CustomEvent('userDeleted', { 
+          detail: { userId: userId } 
+        }));
       } catch (error) {
         console.error('Lỗi khi xóa người dùng:', error);
         if (error.response?.status === 403) {
@@ -75,6 +98,33 @@ const UserList = ({ refresh }) => {
   };
 
   // Bắt đầu chỉnh sửa
+  // Helper functions để hiển thị role giống RoleManagement
+  const getRoleColor = (role) => {
+    switch (role) {
+      case 'admin':
+        return '#e74c3c'; // Đỏ
+      case 'moderator':
+        return '#f39c12'; // Cam
+      case 'user':
+        return '#3498db'; // Xanh dương
+      default:
+        return '#95a5a6'; // Xám
+    }
+  };
+
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'admin':
+        return '👑 Quản trị viên';
+      case 'moderator':
+        return '👮‍♀️ Kiểm duyệt viên';
+      case 'user':
+        return '👤 Người dùng';
+      default:
+        return role;
+    }
+  };
+
   const startEdit = (user) => {
     setEditingUser(user);
     setEditName(user.name);
@@ -86,26 +136,35 @@ const UserList = ({ refresh }) => {
     setEditingUser(null);
     setEditName('');
     setEditEmail('');
+    // Không cần reset editRole nữa
   };
 
   // Lưu chỉnh sửa
   const saveEdit = async () => {
-    // Validate all fields
+    // Validate name và email fields (không validate role nữa)
     const isValid = validateAll({ name: editName, email: editEmail });
     if (!isValid) {
       return;
     }
 
     try {
-      await axios.put(`http://localhost:3000/api/users/${editingUser.id}`, {
+      await axios.put(`http://localhost:3000/api/admin/users/${editingUser.id}`, {
         name: editName.trim(),
         email: editEmail.trim()
+        // Không gửi role nữa
       }, {
-        headers: authService.getAuthHeaders()
+        headers: {
+          'Authorization': `Bearer ${authService.getAccessToken()}`
+        }
       });
       fetchUsers(); // Refresh danh sách
       cancelEdit();
       showNotification('Cập nhật người dùng thành công! ✅', 'success');
+      
+      // Phát sự kiện để thông báo thông tin người dùng đã được cập nhật
+      window.dispatchEvent(new CustomEvent('userInfoUpdated', { 
+        detail: { userId: editingUser.id, name: editName, email: editEmail } 
+      }));
     } catch (error) {
       console.error('Lỗi khi cập nhật người dùng:', error);
       if (error.response?.status === 403) {
@@ -150,6 +209,7 @@ const UserList = ({ refresh }) => {
                 <tr>
                   <th className="table-header-cell">Họ và tên</th>
                   <th className="table-header-cell">Email</th>
+                  <th className="table-header-cell">Vai trò</th>
                   <th className="table-header-cell actions-cell">Thao tác</th>
                 </tr>
               </thead>
@@ -196,6 +256,14 @@ const UserList = ({ refresh }) => {
                       ) : (
                         <span className="user-email">{user.email}</span>
                       )}
+                    </td>
+                    <td className="table-cell role-cell">
+                      <span 
+                        className={`role-badge ${user.role}`}
+                        style={{ backgroundColor: getRoleColor(user.role) }}
+                      >
+                        {getRoleDisplayName(user.role)}
+                      </span>
                     </td>
                     <td className="table-cell actions-cell">
                       {editingUser && editingUser.id === user.id ? (
@@ -334,6 +402,11 @@ const UserList = ({ refresh }) => {
           min-width: 250px;
         }
         
+        .role-cell {
+          min-width: 150px;
+          text-align: center;
+        }
+        
         .actions-cell {
           width: 180px;
           text-align: center;
@@ -384,6 +457,47 @@ const UserList = ({ refresh }) => {
         .edit-input.error {
           border-color: #e74c3c;
           background-color: #fdf2f2;
+        }
+        
+        .edit-select {
+          width: 100%;
+          padding: 0.5rem;
+          border: 2px solid #667eea;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          background: white;
+        }
+        
+        .edit-select:focus {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .role-badge {
+          padding: 0.4rem 0.8rem;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          display: inline-block;
+          transition: all 0.2s ease;
+        }
+        
+        .role-badge.admin {
+          background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+          color: white;
+          box-shadow: 0 2px 8px rgba(238, 90, 36, 0.3);
+        }
+        
+        .role-badge.moderator {
+          background: linear-gradient(135deg, #f39c12, #e67e22);
+          color: white;
+          box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+        }
+        
+        .role-badge.user {
+          background: linear-gradient(135deg, #74b9ff, #0984e3);
+          color: white;
+          box-shadow: 0 2px 8px rgba(9, 132, 227, 0.3);
         }
         
         .edit-field {
@@ -481,6 +595,15 @@ const UserList = ({ refresh }) => {
           
           .email-cell {
             min-width: 200px;
+          }
+          
+          .role-cell {
+            min-width: 120px;
+          }
+          
+          .role-badge {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.6rem;
           }
           
           .actions-cell {

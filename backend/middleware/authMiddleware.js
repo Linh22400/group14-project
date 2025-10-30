@@ -4,22 +4,39 @@ const User = require('../models/User');
 // Middleware để xác thực token
 const authenticate = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    console.log('🔐 Auth middleware called');
+    console.log('Authorization header:', req.headers.authorization);
+    console.log('URL:', req.url);
+    console.log('Method:', req.method);
+    
+    const authHeader = req.header('Authorization');
+    console.log('Auth header:', authHeader);
+    
+    const token = authHeader?.replace('Bearer ', '');
+    console.log('Token extracted:', token ? token.substring(0, 50) + '...' : 'No token');
     
     if (!token) {
+      console.log('❌ No token provided');
       return res.status(401).json({ message: 'Không có token, truy cập bị từ chối' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key');
+    console.log('Token decoded:', decoded);
+    
     const user = await User.findById(decoded.userId).select('-password');
+    console.log('User found:', user ? user.email : 'No user');
     
     if (!user) {
+      console.log('❌ User not found');
       return res.status(401).json({ message: 'Token không hợp lệ' });
     }
 
     req.user = user;
+    console.log('✅ Auth successful, user:', user.email);
     next();
   } catch (error) {
+    console.error('❌ Auth error:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(401).json({ message: 'Token không hợp lệ' });
   }
 };
