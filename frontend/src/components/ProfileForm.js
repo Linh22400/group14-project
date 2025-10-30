@@ -136,7 +136,7 @@ const ProfileForm = ({ user, onSave, onCancel }) => {
           <div className="form-group avatar-group">
             <label>Ảnh đại diện</label>
             <AvatarUpload 
-              currentAvatar={user.avatar}
+              currentAvatar={user?.avatar}
               onAvatarChange={(newAvatar) => {
                 // Cập nhật avatar trong form data
                 const updatedUser = { ...user, avatar: newAvatar };
