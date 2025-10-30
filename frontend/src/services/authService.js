@@ -193,11 +193,17 @@ class AuthService {
 
   // API call với tự động refresh token
   async authenticatedFetch(url, options = {}) {
-    // Thêm auth headers
-    options.headers = {
-      ...options.headers,
-      ...this.getAuthHeaders()
-    };
+    // Nếu headers đã được cung cấp (như trong uploadAvatar), giữ nguyên
+    // Nếu chưa có headers, thêm auth headers mặc định
+    if (!options.headers || Object.keys(options.headers).length === 0) {
+      options.headers = this.getAuthHeaders();
+    } else {
+      // Nếu đã có headers, chỉ thêm Authorization nếu chưa có
+      options.headers = {
+        ...options.headers,
+        'Authorization': options.headers['Authorization'] || (this.accessToken ? `Bearer ${this.accessToken}` : '')
+      };
+    }
 
     // Thực hiện request với retry mechanism
     const response = await this.retryRequest(url, options);
@@ -314,10 +320,16 @@ class AuthService {
     const formData = new FormData();
     formData.append('avatar', file);
 
-    const response = await this.authenticatedFetch('http://localhost:3000/api/upload-avatar', {
-      method: 'POST',
-      body: formData
+    // Tạo headers riêng cho upload file, không bao gồm Content-Type
+    const uploadHeaders = {
+      'Authorization': this.accessToken ? `Bearer ${this.accessToken}` : ''
       // Không set Content-Type để browser tự động set với boundary
+    };
+
+    const response = await this.authenticatedFetch('http://localhost:3000/api/avatar/upload-avatar', {
+      method: 'POST',
+      body: formData,
+      headers: uploadHeaders
     });
 
     const result = await response.json();

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import profileService from '../services/profileService';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
+import AvatarUpload from './AvatarUpload';
 import './Profile.css';
 
 const Profile = ({ onUpdateClick }) => {
@@ -78,9 +79,9 @@ const Profile = ({ onUpdateClick }) => {
     setError('');
 
     try {
-      console.log('Uploading avatar file:', file.name, file.size, file.type);
+      
       const response = await authService.uploadAvatar(file);
-      console.log('Avatar upload response:', response);
+      
       
       // Cập nhật avatar trong user data
       const updatedUser = {
@@ -164,28 +165,15 @@ const Profile = ({ onUpdateClick }) => {
 
         <div className="profile-content">
           <div className="avatar-section">
-            <div className="avatar-container">
-              <img 
-                src={getAvatarUrl(user.avatar) || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjBGMEYwIi8+Cjx0ZXh0IHg9Ijc1IiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7imqDvuI88L3RleHQ+Cjwvc3ZnPgo='}
-                alt="Avatar" 
-                className="avatar-image"
-              />
-              <div className="avatar-overlay">
-                <label htmlFor="avatar-upload" className="avatar-upload-label">
-                  <span className="upload-icon">📷</span>
-                  <span>Đổi ảnh</span>
-                </label>
-                <input
-                  type="file"
-                  id="avatar-upload"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  className="avatar-input"
-                  disabled={uploading}
-                />
-              </div>
-            </div>
-            {uploading && <div className="upload-indicator">Đang upload...</div>}
+            <AvatarUpload 
+              currentAvatar={user.avatar}
+              onAvatarChange={(newAvatar) => {
+                const updatedUser = { ...user, avatar: newAvatar };
+                setUser(updatedUser);
+                authService.setUser(updatedUser);
+              }}
+              user={user}
+            />
           </div>
 
           <div className="info-group">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import profileService from '../services/profileService';
 import { useNotification } from '../contexts/NotificationContext';
+import AvatarUpload from './AvatarUpload';
 import './ProfileForm.css';
 
 const ProfileForm = ({ user, onSave, onCancel }) => {
@@ -132,6 +133,21 @@ const ProfileForm = ({ user, onSave, onCancel }) => {
         )}
 
         <form onSubmit={handleSubmit} className="profile-form">
+          <div className="form-group avatar-group">
+            <label>Ảnh đại diện</label>
+            <AvatarUpload 
+              currentAvatar={user.avatar}
+              onAvatarChange={(newAvatar) => {
+                // Cập nhật avatar trong form data
+                const updatedUser = { ...user, avatar: newAvatar };
+                if (onSave) {
+                  onSave(updatedUser);
+                }
+              }}
+              user={user}
+            />
+          </div>
+
           <div className="form-group">
             <label htmlFor="name">Họ tên *</label>
             <input
