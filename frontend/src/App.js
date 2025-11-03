@@ -11,6 +11,8 @@ import ProfilePage from './components/ProfilePage';
 import AdminDashboard from './components/AdminDashboard';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
+import UserActivityLogs from './components/UserActivityLogs';
+import AdminActivityLogs from './components/AdminActivityLogs';
 import authService from './services/authService';
 import './App.css';
 
@@ -176,12 +178,26 @@ function App() {
         >
           👤 Profile
         </button>
+        <button 
+          className={`nav-button ${isActive('/activity-logs') ? 'active' : ''}`} 
+          onClick={() => handleNavigation('/activity-logs')}
+        >
+          📋 Nhật ký
+        </button>
         {currentUser && currentUser.role === 'admin' && (
           <button 
             className={`nav-button ${isActive('/admin') ? 'active' : ''}`} 
             onClick={() => handleNavigation('/admin')}
           >
             👨‍💼 Admin
+          </button>
+        )}
+        {currentUser && currentUser.role === 'admin' && (
+          <button 
+            className={`nav-button ${isActive('/admin/activity-logs') ? 'active' : ''}`} 
+            onClick={() => handleNavigation('/admin/activity-logs')}
+          >
+            🔍 Admin Logs
           </button>
         )}
       </nav>
@@ -292,6 +308,22 @@ function App() {
                     onUserRoleUpdate={refreshCurrentUser}
                     updateCurrentUserRole={updateCurrentUserRole}
                   />
+                </Layout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/activity-logs" element={
+              <ProtectedRoute>
+                <Layout currentUser={currentUser} onLogout={handleLogout}>
+                  <UserActivityLogs />
+                </Layout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/admin/activity-logs" element={
+              <ProtectedRoute>
+                <Layout currentUser={currentUser} onLogout={handleLogout} hideFooter={true}>
+                  <AdminActivityLogs />
                 </Layout>
               </ProtectedRoute>
             } />

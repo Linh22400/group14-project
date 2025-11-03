@@ -20,6 +20,16 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from uploads directory
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// import middleware
+const { autoLogActivity } = require('./middleware/activityLogger');
+const { generalRateLimiter } = require('./middleware/rateLimiter');
+
+// Apply general rate limiting to all API routes
+app.use('/api', generalRateLimiter);
+
+// Apply activity logging to all API routes
+app.use('/api', autoLogActivity);
+
 // Kết nối MongoDB Atlas
 const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/groupDB';
 
@@ -37,6 +47,7 @@ const profileRoutes = require('./routes/profile');
 const adminRoutes = require('./routes/admin');
 const passwordRoutes = require('./routes/password');
 const avatarRoutes = require('./routes/avatar');
+const activityLogRoutes = require('./routes/activityLogRoutes');
 
 // gắn router vào /api
 app.use('/api/auth', authRoutes);
@@ -44,6 +55,7 @@ app.use('/api/auth', passwordRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/avatar', avatarRoutes);
+app.use('/api/activity-logs', activityLogRoutes);
 app.use('/api', userRoutes);
 
 
