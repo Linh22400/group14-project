@@ -26,12 +26,16 @@ const UserInfo = ({ user, onLogout }) => {
     }
   };
 
+  // Luôn hiển thị với giá trị mặc định, không return null
+  const userName = user?.name || 'Đang tải...';
+  const userRole = user?.role || 'user';
+
   return (
     <div className="user-info">
       <div className="user-welcome">
         <span className="user-icon">👤</span>
-        <span className="user-name">{user.name}</span>
-        <span className="user-role">({user.role})</span>
+        <span className="user-name">{userName}</span>
+        <span className="user-role">({userRole})</span>
       </div>
       <button 
         onClick={handleLogout}
