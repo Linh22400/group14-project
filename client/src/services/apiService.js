@@ -3,7 +3,7 @@ import authService from './authService';
 
 class ApiService {
   constructor() {
-    this.baseURL = 'http://localhost:3000/api';
+    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
   }
 
   // Tạo headers với authentication
