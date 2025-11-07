@@ -5,16 +5,29 @@
   box-sizing: border-box;
 }
 
+html {
+  height: 100%;
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
   color: #333;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
+  min-height: -webkit-fill-available;
 }
 
 /* App container */
 .App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* Main layout container */
+.main-app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -25,6 +38,7 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  width: 100%;
 }
 
 /* Header */
@@ -111,6 +125,7 @@ body {
 .app-main {
   flex: 1;
   padding: 3rem 0;
+  width: 100%;
 }
 
 .content-grid {
@@ -125,7 +140,7 @@ body {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-radius: 15px;
-  padding: 2rem;
+  padding: 1rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -164,6 +179,10 @@ body {
   text-align: center;
   color: #7f8c8d;
   font-size: 0.9rem;
+  flex-shrink: 0;
+  width: 100%;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: auto;
 }
 
 /* Animations */
@@ -176,6 +195,43 @@ body {
   }
   60% {
     transform: translateY(-5px);
+  }
+}
+
+/* Additional utilities for footer positioning */
+@media (max-width: 480px) {
+  .app-footer {
+    padding: 0.8rem 0;
+    font-size: 0.75rem;
+  }
+  
+  .app-main {
+    padding: 2rem 0;
+  }
+  
+  .main-app {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Ensure content doesn't overlap footer */
+.app-main > .container {
+  padding: 0;
+}
+
+/* Admin dashboard specific spacing */
+.admin-dashboard {
+  margin-bottom: 1rem; /* Minimal space */
+}
+
+
+
+/* Handle zoom scenarios */
+@media screen and (min-width: 320px) and (max-width: 1200px) {
+  .main-app {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
 }
 
@@ -197,6 +253,18 @@ body {
   .header-content {
     flex-direction: column;
     text-align: center;
+  }
+  
+  .app-footer {
+    padding: 1rem 0;
+    font-size: 0.8rem;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .main-app {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
   
   .header-nav {
