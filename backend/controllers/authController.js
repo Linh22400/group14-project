@@ -2,6 +2,7 @@ const User = require('../models/User');
 const RefreshToken = require('../models/RefreshToken');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const ActivityLog = require('../models/ActivityLog');
 
 // Cấu hình token
 const ACCESS_TOKEN_EXPIRY = '15m'; // Access token hết hạn sau 15 phút
@@ -92,6 +93,24 @@ exports.signup = async (req, res) => {
     // Tạo access token và refresh token
     const accessToken = generateAccessToken(newUser._id);
     const refreshToken = await createRefreshToken(newUser._id, userAgent, ipAddress);
+
+    // Log successful registration
+    try {
+      await ActivityLog.logActivity(
+        newUser._id,
+        'REGISTER',
+        {
+          email: newUser.email,
+          name: newUser.name,
+          registrationMethod: 'email',
+          ipAddress,
+          userAgent
+        },
+        req
+      );
+    } catch (logError) {
+      console.error('Error logging registration:', logError);
+    }
 
     res.status(201).json({
       success: true,
@@ -196,6 +215,23 @@ exports.login = async (req, res) => {
     // Tìm người dùng theo email
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
+      // Log failed login attempt
+      try {
+        await ActivityLog.logActivity(
+          null,
+          'LOGIN_FAILED',
+          {
+            email: email.toLowerCase(),
+            reason: 'User not found',
+            ipAddress: req.ip || req.connection?.remoteAddress || null,
+            userAgent: req.headers['user-agent'] || null
+          },
+          req
+        );
+      } catch (logError) {
+        console.error('Error logging failed login:', logError);
+      }
+      
       return res.status(401).json({ 
         success: false, 
         message: 'Email hoặc mật khẩu không đúng' 
@@ -205,6 +241,23 @@ exports.login = async (req, res) => {
     // Kiểm tra mật khẩu
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
+      // Log failed login attempt
+      try {
+        await ActivityLog.logActivity(
+          user._id,
+          'LOGIN_FAILED',
+          {
+            email: email.toLowerCase(),
+            reason: 'Invalid password',
+            ipAddress: req.ip || req.connection?.remoteAddress || null,
+            userAgent: req.headers['user-agent'] || null
+          },
+          req
+        );
+      } catch (logError) {
+        console.error('Error logging failed login:', logError);
+      }
+      
       return res.status(401).json({ 
         success: false, 
         message: 'Email hoặc mật khẩu không đúng' 
@@ -218,6 +271,22 @@ exports.login = async (req, res) => {
     // Tạo access token và refresh token
     const accessToken = generateAccessToken(user._id);
     const refreshToken = await createRefreshToken(user._id, userAgent, ipAddress);
+
+    // Log successful login
+    try {
+      await ActivityLog.logActivity(
+        user._id,
+        'LOGIN',
+        {
+          loginMethod: 'password',
+          ipAddress,
+          userAgent
+        },
+        req
+      );
+    } catch (logError) {
+      console.error('Error logging successful login:', logError);
+    }
 
     res.json({
       success: true,
@@ -246,6 +315,23 @@ exports.login = async (req, res) => {
 // Đăng xuất
 exports.logout = async (req, res) => {
   try {
+    // Log logout activity
+    if (req.user) {
+      try {
+        await ActivityLog.logActivity(
+          req.user._id,
+          'LOGOUT',
+          {
+            ipAddress: req.ip || req.connection?.remoteAddress || null,
+            userAgent: req.headers['user-agent'] || null
+          },
+          req
+        );
+      } catch (logError) {
+        console.error('Error logging logout:', logError);
+      }
+    }
+    
     // Thu hồi tất cả refresh tokens của user
     if (req.user && req.user._id) {
       await RefreshToken.revokeAllUserTokens(req.user._id);

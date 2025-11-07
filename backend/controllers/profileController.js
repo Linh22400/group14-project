@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const ActivityLog = require('../models/ActivityLog');
 
 // Lấy thông tin profile của user hiện tại
 exports.getProfile = async (req, res) => {
@@ -88,6 +89,25 @@ exports.updateProfile = async (req, res) => {
         success: false, 
         message: 'Không tìm thấy người dùng' 
       });
+    }
+
+    // Log profile update activity
+    try {
+      await ActivityLog.logActivity(
+        userId,
+        'PROFILE_UPDATE',
+        {
+          oldName: req.user.name,
+          newName: updatedUser.name,
+          oldEmail: req.user.email,
+          newEmail: updatedUser.email,
+          ipAddress: req.ip || req.connection?.remoteAddress || null,
+          userAgent: req.headers['user-agent'] || null
+        },
+        req
+      );
+    } catch (logError) {
+      console.error('Error logging profile update:', logError);
     }
 
     // Xử lý URL avatar đầy đủ
