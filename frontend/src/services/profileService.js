@@ -6,7 +6,7 @@ const profileService = {
   // Lấy thông tin profile
   async getProfile() {
     try {
-      const token = authService.getToken();
+      const token = authService.getAccessToken();
       if (!token) {
         throw new Error('Không có token');
       }
@@ -35,7 +35,7 @@ const profileService = {
   // Cập nhật thông tin profile
   async updateProfile(profileData) {
     try {
-      const token = authService.getToken();
+      const token = authService.getAccessToken();
       if (!token) {
         throw new Error('Không có token');
       }

@@ -49,7 +49,7 @@ function App() {
   // Function to refresh current user data
   const refreshCurrentUser = async () => {
     try {
-      const token = authService.getToken();
+      const token = authService.getAccessToken();
       if (token) {
         const response = await fetch('http://localhost:3000/api/auth/me', {
           headers: {

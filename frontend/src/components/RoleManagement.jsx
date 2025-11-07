@@ -86,7 +86,7 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
     setNotification('');
 
     try {
-      const result = await adminService.updateUserRole(email, newRole);
+      const result = await adminService.updateUserRole(userId, newRole);
       
       // Cập nhật role trong state
       setUsers(users.map(user => 
@@ -137,10 +137,25 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
     switch (role) {
       case 'admin':
         return '#e74c3c'; // Đỏ
+      case 'moderator':
+        return '#f39c12'; // Cam
       case 'user':
         return '#3498db'; // Xanh dương
       default:
         return '#95a5a6'; // Xám
+    }
+  };
+
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'admin':
+        return '👨‍💼 Quản trị viên';
+      case 'moderator':
+        return '👮‍♀️ Kiểm duyệt viên';
+      case 'user':
+        return '👤 Người dùng';
+      default:
+        return role;
     }
   };
 
@@ -198,36 +213,28 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
                     className="role-badge"
                     style={{ backgroundColor: getRoleColor(user.role) }}
                   >
-                    {user.role === 'admin' ? '👨‍💼 Quản trị viên' : '👤 Người dùng'}
+                    {getRoleDisplayName(user.role)}
                   </span>
                 </td>
                 <td>
                   <div className="role-actions">
-                    {user.role === 'user' ? (
-                      <button
-                        className="btn-promote"
-                        onClick={() => updateRole(user._id, user.email, 'admin')}
-                        disabled={updatingRole[user._id]}
-                      >
-                        {updatingRole[user._id] ? (
-                          <span className="btn-spinner"></span>
-                        ) : (
-                          '👨‍💼 Nâng cấp lên Admin'
-                        )}
-                      </button>
-                    ) : (
-                      <button
-                        className="btn-demote"
-                        onClick={() => updateRole(user._id, user.email, 'user')}
-                        disabled={updatingRole[user._id]}
-                      >
-                        {updatingRole[user._id] ? (
-                          <span className="btn-spinner"></span>
-                        ) : (
-                          '👤 Hạ cấp xuống User'
-                        )}
-                      </button>
-                    )}
+                    <select
+                      value={user.role}
+                      onChange={(e) => updateRole(user._id, user.email, e.target.value)}
+                      disabled={updatingRole[user._id]}
+                      className="role-select"
+                      style={{ backgroundColor: getRoleColor(user.role), color: 'white' }}
+                    >
+                      <option value="user" style={{ backgroundColor: '#3498db', color: 'white' }}>
+                        👤 Người dùng
+                      </option>
+                      <option value="moderator" style={{ backgroundColor: '#f39c12', color: 'white' }}>
+                        👮‍♀️ Kiểm duyệt viên
+                      </option>
+                      <option value="admin" style={{ backgroundColor: '#e74c3c', color: 'white' }}>
+                        👨‍💼 Quản trị viên
+                      </option>
+                    </select>
                   </div>
                 </td>
               </tr>
@@ -436,6 +443,54 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
           display: inline-block;
         }
 
+        .role-select {
+          padding: 0.5rem 1rem;
+          border: 2px solid #e9ecef;
+          border-radius: 8px;
+          background: white;
+          color: #2c3e50;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          min-width: 150px;
+          appearance: none;
+          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+          background-repeat: no-repeat;
+          background-position: right 0.7rem center;
+          background-size: 1em;
+          padding-right: 2.5rem;
+        }
+
+        .role-select:hover:not(:disabled) {
+          border-color: #667eea;
+          box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .role-select:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .role-select:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+          background: #f8f9fa;
+        }
+
+        /* Style cho các option trong dropdown */
+        .role-select option {
+          background: white !important;
+          color: #2c3e50 !important;
+          padding: 0.5rem;
+        }
+
+        .role-select option:checked {
+          background: #667eea !important;
+          color: white !important;
+        }
+
         @media (max-width: 768px) {
           .role-management {
             padding: 1.5rem;
@@ -460,9 +515,10 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
             flex-direction: column;
           }
 
-          .btn-promote, .btn-demote {
+          .role-select {
             min-width: auto;
             font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
           }
         }
 

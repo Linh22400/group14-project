@@ -6,7 +6,8 @@ const AdminStats = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     adminUsers: 0,
-    regularUsers: 0,
+    moderatorUsers: 0,
+    userUsers: 0,
     recentUsers: 0
   });
   const [loading, setLoading] = useState(true);
@@ -114,8 +115,16 @@ const AdminStats = () => {
         />
         
         <StatCard
+          title="Kiểm duyệt viên"
+          value={stats.moderatorUsers}
+          icon="👮‍♀️"
+          color="#f39c12"
+          description="Số lượng kiểm duyệt viên"
+        />
+        
+        <StatCard
           title="Người dùng thường"
-          value={stats.regularUsers}
+          value={stats.userUsers}
           icon="👤"
           color="#3498db"
           description="Số lượng user thường"
@@ -147,15 +156,28 @@ const AdminStats = () => {
           </div>
           
           <div className="progress-item">
-            <span className="progress-label">User</span>
+            <span className="progress-label">Kiểm duyệt viên</span>
             <div className="progress-bar">
               <div 
-                className="progress-fill user-fill"
-                style={{ width: `${stats.totalUsers > 0 ? (stats.regularUsers / stats.totalUsers) * 100 : 0}%` }}
+                className="progress-fill moderator-fill"
+                style={{ width: `${stats.totalUsers > 0 ? (stats.moderatorUsers / stats.totalUsers) * 100 : 0}%` }}
               ></div>
             </div>
             <span className="progress-percentage">
-              {stats.totalUsers > 0 ? Math.round((stats.regularUsers / stats.totalUsers) * 100) : 0}%
+              {stats.totalUsers > 0 ? Math.round((stats.moderatorUsers / stats.totalUsers) * 100) : 0}%
+            </span>
+          </div>
+          
+          <div className="progress-item">
+            <span className="progress-label">Người dùng</span>
+            <div className="progress-bar">
+              <div 
+                className="progress-fill user-fill"
+                style={{ width: `${stats.totalUsers > 0 ? (stats.userUsers / stats.totalUsers) * 100 : 0}%` }}
+              ></div>
+            </div>
+            <span className="progress-percentage">
+              {stats.totalUsers > 0 ? Math.round((stats.userUsers / stats.totalUsers) * 100) : 0}%
             </span>
           </div>
         </div>
@@ -306,6 +328,10 @@ const AdminStats = () => {
 
         .admin-fill {
           background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+
+        .moderator-fill {
+          background: linear-gradient(90deg, #f39c12, #e67e22);
         }
 
         .user-fill {
