@@ -43,7 +43,7 @@ const getMyActivityLogs = async (req, res) => {
 };
 
 /**
- * Get all activity logs (Admin only)
+
  * @route GET /api/activity-logs/admin/all
  */
 const getAllActivityLogs = async (req, res) => {
