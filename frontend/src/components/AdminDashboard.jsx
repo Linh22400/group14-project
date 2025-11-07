@@ -14,7 +14,14 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
 
   // Component mount effect
   useEffect(() => {
+    console.log('AdminDashboard mounted, auto-refreshing data...');
     setIsMounted(true);
+    
+    // Tự động refresh data khi admin mới login
+    setRefreshKey(prev => {
+      console.log('AdminDashboard refreshKey changed from', prev, 'to', prev + 1);
+      return prev + 1;
+    });
 
     // Lắng nghe sự kiện userRoleUpdated để cập nhật currentUser
     const handleUserRoleUpdated = (event) => {

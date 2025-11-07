@@ -292,27 +292,62 @@ class AuthService {
 
   // Login
   async login(email, password) {
-    const response = await fetch('http://localhost:3000/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
-    });
+    try {
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Login failed');
+      if (!response.ok) {
+        let errorMessage = 'Đăng nhập thất bại';
+        let errorData = null;
+        
+        try {
+          errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+          console.log('Server error response:', errorData);
+        } catch (jsonError) {
+          // Nếu không parse được JSON, lấy status text
+          errorMessage = `${response.status}: ${response.statusText}`;
+        }
+        
+        // Thêm thông tin status code vào error message để authSlice có thể xử lý
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        error.serverData = errorData;
+        console.log('Throwing error with status:', response.status, 'message:', errorMessage);
+        throw error;
+      }
+
+      const result = await response.json();
+      
+      // DEBUG: Kiểm tra xem user có tồn tại trong result.data không
+      console.log('Login response result:', result);
+      console.log('User data from login:', result.data?.user);
+      
+      // Lưu cả access token và refresh token
+      this.setAccessToken(result.data.accessToken);
+      this.setRefreshToken(result.data.refreshToken);
+      this.setUser(result.data.user);
+
+      return result;
+    } catch (error) {
+      // Nếu là network error hoặc connection error
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.');
+      }
+      
+      // Nếu đã có error message từ server, giữ nguyên
+      if (error.message) {
+        throw error;
+      }
+      
+      // Các lỗi khác
+      throw new Error('Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.');
     }
-
-    const result = await response.json();
-    
-    // Lưu cả access token và refresh token
-    this.setAccessToken(result.data.accessToken);
-    this.setRefreshToken(result.data.refreshToken);
-    this.setUser(result.data.user);
-
-    return result;
   }
 
   // Upload avatar

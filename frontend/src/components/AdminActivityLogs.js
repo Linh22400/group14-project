@@ -29,7 +29,9 @@ const AdminActivityLogs = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [exportFormat, setExportFormat] = useState('csv');
-  const [cleanupDays, setCleanupDays] = useState(90);
+  const [cleanupDays, setCleanupDays] = useState(30); // Đổi từ 90 sang 30 ngày
+  const [deleteAllMode, setDeleteAllMode] = useState(false); // Thêm mode xóa hết
+  const [autoReload, setAutoReload] = useState(true); // Tự động reload sau khi xóa
 
   const logsPerPage = 20;
 
@@ -64,6 +66,7 @@ const AdminActivityLogs = () => {
       };
 
       const response = await getAllActivityLogs(params);
+      console.log('Activity logs response:', response);
       
       if (response.success) {
         const formattedLogs = response.data.logs.map(formatActivityLog);
@@ -100,8 +103,41 @@ const AdminActivityLogs = () => {
   const fetchActivityStats = async () => {
     try {
       const response = await getActivityStats();
+      console.log('Activity stats response:', response);
       if (response.success) {
-        setStats(response.data);
+        console.log('Stats data structure:', response.data);
+        
+        // Tính toán các thống kê từ dữ liệu backend
+        const actionStats = response.data.actionStats || [];
+        const topUsers = response.data.topUsers || [];
+        
+        console.log('Action stats:', actionStats);
+        console.log('Top users:', topUsers);
+        
+        // Tính tổng số hoạt động
+        const totalLogs = actionStats.reduce((sum, stat) => sum + (stat.count || 0), 0);
+        
+        // Tính số người dùng hoạt động (từ topUsers)
+        const totalUsers = topUsers.length;
+        
+        // Tìm số đăng nhập thất bại từ actionStats
+        const failedLoginStat = actionStats.find(stat => stat._id === 'LOGIN_FAILED');
+        const failedLogins = failedLoginStat ? (failedLoginStat.count || 0) : 0;
+        
+        // Ước tính số IP unique (có thể cần API riêng cho chính xác)
+        const uniqueIPs = 'N/A'; // Cần API riêng để đếm IP
+        
+        console.log('Calculated stats:', { totalLogs, totalUsers, failedLogins });
+        
+        setStats({
+          totalLogs,
+          totalUsers,
+          failedLogins,
+          uniqueIPs,
+          actionStats,
+          topUsers,
+          hourlyDistribution: response.data.hourlyDistribution || []
+        });
       }
     } catch (err) {
       console.error('Error fetching activity stats:', err);
@@ -111,8 +147,11 @@ const AdminActivityLogs = () => {
   const fetchFailedLoginAttempts = async () => {
     try {
       const response = await getFailedLoginAttempts({ limit: 50 });
-      if (response.success) {
-        setFailedLogins(response.data);
+      console.log('Failed login attempts response:', response);
+      if (response.success && response.data) {
+        // Format logs để hiển thị đúng
+        const formattedLogs = response.data.logs.map(log => formatActivityLog(log));
+        setFailedLogins(formattedLogs);
       }
     } catch (err) {
       console.error('Error fetching failed login attempts:', err);
@@ -151,18 +190,47 @@ const AdminActivityLogs = () => {
   };
 
   const handleCleanup = async () => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa nhật ký cũ hơn ${cleanupDays} ngày?`)) {
+    let daysToDelete = deleteAllMode ? 0 : cleanupDays;
+    
+    // Kiểm tra giá trị hợp lệ
+    if (!deleteAllMode && (!cleanupDays || cleanupDays < 1 || cleanupDays > 365)) {
+      alert('Vui lòng nhập số ngày hợp lệ (1-365 ngày)');
+      return;
+    }
+
+    let confirmMessage = '';
+    if (deleteAllMode) {
+      confirmMessage = 'Bạn có chắc chắn muốn XÓA HẾT TẤT CẢ nhật ký hoạt động? Hành động này không thể hoàn tác!';
+    } else {
+      confirmMessage = `Bạn có chắc chắn muốn xóa nhật ký cũ hơn ${cleanupDays} ngày?`;
+    }
+
+    if (!window.confirm(confirmMessage)) {
       return;
     }
 
     try {
       setLoading(true);
-      const response = await cleanupOldLogs(cleanupDays);
+      console.log('Calling cleanup with days:', daysToDelete);
+      const response = await cleanupOldLogs(daysToDelete);
+      console.log('Cleanup response:', response);
       if (response.success) {
-        alert(`Đã xóa ${response.data.deletedCount} nhật ký cũ`);
-        fetchActivityLogs();
-        fetchActivityStats();
-      }
+          const message = deleteAllMode 
+            ? `Đã xóa tất cả ${response.data.deletedCount} nhật ký`
+            : `Đã xóa ${response.data.deletedCount} nhật ký cũ`;
+          alert(message);
+          
+          if (autoReload) {
+            // Tự động reload lại trang sau khi xóa thành công
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000); // Đợi 1 giây để user đọc thông báo
+          } else {
+            // Nếu không reload, fetch lại dữ liệu mới
+            fetchActivityLogs();
+            fetchActivityStats();
+          }
+        }
     } catch (err) {
       console.error('Error cleaning up logs:', err);
       setError('Không thể xóa nhật ký cũ');
@@ -320,7 +388,7 @@ const AdminActivityLogs = () => {
             className="btn btn-warning"
             disabled={loading}
           >
-            Dọn dẹp cũ
+            {deleteAllMode ? 'Xóa hết tất cả' : `Dọn dẹp cũ (${cleanupDays} ngày)`}
           </button>
         </div>
       </div>
@@ -376,6 +444,47 @@ const AdminActivityLogs = () => {
             </div>
           </div>
           <div className="filter-actions">
+            <div className="filter-group">
+              <div className="form-check mb-2">
+                <input
+                  type="checkbox"
+                  id="deleteAllMode"
+                  className="form-check-input"
+                  checked={deleteAllMode}
+                  onChange={(e) => setDeleteAllMode(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="deleteAllMode">
+                  Xóa hết tất cả logs
+                </label>
+              </div>
+              <div className="form-check mb-2">
+                <input
+                  type="checkbox"
+                  id="autoReload"
+                  className="form-check-input"
+                  checked={autoReload}
+                  onChange={(e) => setAutoReload(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="autoReload">
+                  Tự động reload sau khi xóa
+                </label>
+              </div>
+              {!deleteAllMode && (
+                <div>
+                  <label>Số ngày giữ lại khi dọn dẹp:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={cleanupDays}
+                    onChange={(e) => setCleanupDays(parseInt(e.target.value) || 30)}
+                    className="form-control"
+                    style={{ width: '100px' }}
+                  />
+                  <small className="form-text text-muted">Ngày</small>
+                </div>
+              )}
+            </div>
             <button onClick={clearFilters} className="btn btn-outline-secondary">
               Xóa bộ lọc
             </button>
@@ -388,19 +497,19 @@ const AdminActivityLogs = () => {
           <h3>Thống kê hoạt động</h3>
           <div className="stats-grid">
             <div className="stat-card">
-              <div className="stat-number">{stats.totalLogs}</div>
+              <div className="stat-number">{stats.totalLogs || 0}</div>
               <div className="stat-label">Tổng số hoạt động</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">{stats.totalUsers}</div>
+              <div className="stat-number">{stats.totalUsers || 0}</div>
               <div className="stat-label">Người dùng hoạt động</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">{stats.failedLogins}</div>
+              <div className="stat-number">{stats.failedLogins || 0}</div>
               <div className="stat-label">Đăng nhập thất bại</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">{stats.uniqueIPs}</div>
+              <div className="stat-number">{stats.uniqueIPs || 'N/A'}</div>
               <div className="stat-label">Địa chỉ IP</div>
             </div>
           </div>
@@ -450,7 +559,7 @@ const AdminActivityLogs = () => {
               {activeTab === 'all' ? (
                 logs.map(renderLogRow)
               ) : (
-                failedLogins.map(renderLogRow)
+                (failedLogins || []).map(renderLogRow)
               )}
             </tbody>
           </table>

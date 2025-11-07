@@ -357,12 +357,23 @@ const exportActivityLogs = async (req, res) => {
  */
 const cleanupOldLogs = async (req, res) => {
   try {
-    const { days = 90 } = req.query;
-    const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const { days } = req.query;
     
-    const result = await ActivityLog.deleteMany({
-      timestamp: { $lt: cutoffDate }
-    });
+    // Validate days parameter
+    if (!days || isNaN(days) || days < 0 || days > 365) {
+      return res.status(400).json({
+        success: false,
+        message: 'Days parameter must be between 0 and 365 (0 to delete all logs)'
+      });
+    }
+    
+    let query = {};
+    if (days > 0) {
+      const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      query = { timestamp: { $lt: cutoffDate } };
+    }
+    
+    const result = await ActivityLog.deleteMany(query);
     
     // Log the cleanup
     await ActivityLog.logActivity(

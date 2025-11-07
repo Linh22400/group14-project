@@ -130,7 +130,7 @@ export const exportActivityLogs = async (params = {}, format = 'csv') => {
  * @param {number} days - Number of days to keep
  * @returns {Promise<Object>} Cleanup result
  */
-export const cleanupOldLogs = async (days = 90) => {
+export const cleanupOldLogs = async (days) => {
   try {
     const response = await axiosInstance.delete('/activity-logs/admin/cleanup', {
       params: { days }
