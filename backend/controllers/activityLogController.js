@@ -10,7 +10,7 @@ const getMyActivityLogs = async (req, res) => {
     const userId = req.user.id || req.user._id;
     const { limit = 50, page = 1 } = req.query;
     
-    const limitNum = Math.min(parseInt(limit), 100); // Max 100 per page
+    const limitNum = Math.min(parseInt(limit), 100); 
     const skip = (parseInt(page) - 1) * limitNum;
     
     const logs = await ActivityLog.find({ userId })
