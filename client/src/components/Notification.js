@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 const Notification = ({ message, type = 'error', duration = 3000, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -15,14 +15,14 @@ const Notification = ({ message, type = 'error', duration = 3000, onClose }) => 
     }
   }, [message, duration, handleClose]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsExiting(true);
     // Wait for exit animation then call onClose
     setTimeout(() => {
       setIsVisible(false);
       if (onClose) onClose();
     }, 300);
-  };
+  }, [onClose]);
 
   if (!message || !isVisible) return null;
 

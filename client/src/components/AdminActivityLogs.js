@@ -39,7 +39,7 @@ const AdminActivityLogs = () => {
     fetchActivityLogs();
     fetchActivityStats();
     fetchFailedLoginAttempts();
-  }, [currentPage, filters]);
+  }, [currentPage, filters, fetchActivityLogs]);
 
   // Thêm useEffect để fetch lại khi component được mount lại sau khi đăng nhập
   useEffect(() => {
@@ -52,7 +52,7 @@ const AdminActivityLogs = () => {
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [error, loading]);
+  }, [error, loading, fetchActivityLogs]);
 
   const fetchActivityLogs = async () => {
     try {

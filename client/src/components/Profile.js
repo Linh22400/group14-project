@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import profileService from '../services/profileService';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
@@ -24,11 +24,7 @@ const Profile = ({ onUpdateClick }) => {
     return `http://localhost:3000/api/${avatarUrl.replace(/\\/g, '/')}`;
   };
 
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -52,7 +48,11 @@ const Profile = ({ onUpdateClick }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const handleRefresh = () => {
     fetchProfile();

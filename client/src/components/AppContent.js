@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { checkAuth, selectAuth, clearError } from '../store/authSlice';
+import { checkAuth, selectAuth } from '../store/authSlice';
 import UserList from '../components/UserList';
 import AddUser from '../components/AddUser';
 import Login from '../components/Login';
@@ -17,10 +17,9 @@ import authService from '../services/authService';
 
 function AppContent() {
   const dispatch = useDispatch();
-  const { user: currentUser, isAuthenticated, loading, error } = useSelector(selectAuth);
+  const { user: currentUser, isAuthenticated, loading } = useSelector(selectAuth);
   const navigate = useNavigate();
   const location = useLocation();
-  const hasRefreshed = React.useRef(false); // Di chuyển ra ngoài để dùng chung
   // Không cần navigationKey nữa, dùng currentUser.role để tự động cập nhật
 
   // Kiểm tra authentication khi component mount
