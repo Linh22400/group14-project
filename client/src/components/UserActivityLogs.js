@@ -20,7 +20,7 @@ const UserActivityLogs = () => {
 
   useEffect(() => {
     fetchActivityLogs();
-  }, [currentPage, filters]);
+  }, [currentPage, filters, fetchActivityLogs]);
 
   const fetchActivityLogs = useCallback(async () => {
     try {
