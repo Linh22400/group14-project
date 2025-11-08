@@ -13,8 +13,5 @@
       "src": "/(.*)",
       "dest": "/client/$1"
     }
-  ],
-  "env": {
-    "REACT_APP_API_URL": "@react_app_api_url"
-  }
+  ]
 }
