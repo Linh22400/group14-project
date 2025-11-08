@@ -3,19 +3,32 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-
-const app = express();
 const path = require('path');
 
-// Logging middleware để debug tất cả requests - PHẢI Ở ĐẦU TIÊN
+const app = express();
+
+// Production security middleware
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1); // Trust Render's proxy
+}
+
+// Enhanced logging middleware
 app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.url} - ${req.ip}`);
   next();
 });
 
-// CORS middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// CORS configuration for production
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files from uploads directory
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -30,15 +43,23 @@ app.use('/api', generalRateLimiter);
 // Apply activity logging to all API routes
 app.use('/api', autoLogActivity);
 
-// Kết nối MongoDB Atlas
+// Kết nối MongoDB Atlas với cấu hình production
 const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/groupDB';
 
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+mongoose.connect(mongoURI)
+.then(() => {
+  console.log('✅ Kết nối MongoDB Atlas thành công!');
+  console.log('📊 MongoDB Status:', mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected');
 })
-.then(() => console.log('✅ Kết nối MongoDB Atlas thành công!'))
-.catch(err => console.error('❌ Lỗi kết nối MongoDB:', err));
+.catch(err => {
+  console.error('❌ Lỗi kết nối MongoDB:', err.message);
+  console.error('🔄 Thử kết nối lại sau 5 giây...');
+  setTimeout(() => {
+    mongoose.connect(mongoURI)
+      .then(() => console.log('✅ Kết nối MongoDB thành công sau retry!'))
+      .catch(err => console.error('❌ Lỗi kết nối MongoDB sau retry:', err.message));
+  }, 5000);
+});
 
 // import router đúng cách
 const userRoutes = require('./routes/user');
@@ -48,6 +69,36 @@ const adminRoutes = require('./routes/admin');
 const passwordRoutes = require('./routes/password');
 const avatarRoutes = require('./routes/avatar');
 const activityLogRoutes = require('./routes/activityLogRoutes');
+
+// Health check endpoint - IMPORTANT for Render
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// API status endpoint
+app.get('/api/status', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API is working',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      auth: '/api/auth',
+      users: '/api/users',
+      profile: '/api/profile',
+      admin: '/api/admin',
+      avatar: '/api/avatar',
+      activityLogs: '/api/activity-logs'
+    }
+  });
+});
 
 // gắn router vào /api
 app.use('/api/auth', authRoutes);
@@ -61,7 +112,39 @@ app.use('/api', userRoutes);
 
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Production-ready server startup
+const server = app.listen(PORT, () => {
+  console.log('🚀 Server started successfully!');
+  console.log(`📡 PORT: ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`⏰ Started at: ${new Date().toISOString()}`);
+  console.log(`🎯 Health check: http://localhost:${PORT}/health`);
+  console.log(`📊 API status: http://localhost:${PORT}/api/status`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🔄 SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('✅ Server closed');
+    mongoose.connection.close(false, () => {
+      console.log('✅ MongoDB connection closed');
+      process.exit(0);
+    });
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🔄 SIGINT received, shutting down gracefully');
+  server.close(() => {
+    console.log('✅ Server closed');
+    mongoose.connection.close(false, () => {
+      console.log('✅ MongoDB connection closed');
+      process.exit(0);
+    });
+  });
+});
 
 // Error handler toàn cục
 app.use((err, req, res, next) => {
