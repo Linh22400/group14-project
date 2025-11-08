@@ -58,69 +58,7 @@ const Profile = ({ onUpdateClick }) => {
     fetchProfile();
   };
 
-  const [uploading, setUploading] = useState(false);
 
-  const handleAvatarUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // Kiểm tra file type
-    if (!file.type.startsWith('image/')) {
-      setError('Vui lòng chọn file ảnh');
-      return;
-    }
-
-    // Kiểm tra file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File ảnh không được lớn hơn 5MB');
-      return;
-    }
-
-    setUploading(true);
-    setError('');
-
-    try {
-      
-      const response = await authService.uploadAvatar(file);
-      
-      
-      // Cập nhật avatar trong user data
-      const updatedUser = {
-        ...user,
-        avatar: response.avatar
-      };
-      setUser(updatedUser);
-
-      // Cập nhật trong localStorage
-      authService.setUser(updatedUser);
-
-      // Thông báo thành công
-      showNotification('Cập nhật avatar thành công! ✅', 'success');
-      setError(''); // Clear any previous errors
-      
-    } catch (error) {
-      const errorMsg = error.message || 'Có lỗi xảy ra khi upload avatar';
-      setError(errorMsg);
-      console.error('Lỗi upload avatar:', error);
-      
-      // Hiển thị thông báo chi tiết hơn cho người dùng
-      let userErrorMsg = errorMsg;
-      if (error.message.includes('Unexpected token')) {
-        userErrorMsg = 'Lỗi kết nối server. Vui lòng thử lại sau.';
-        setError(userErrorMsg);
-      } else if (error.message.includes('NetworkError')) {
-        userErrorMsg = 'Lỗi mạng. Vui lòng kiểm tra kết nối internet.';
-        setError(userErrorMsg);
-      } else if (error.message.includes('413')) {
-        userErrorMsg = 'File quá lớn. Vui lòng chọn ảnh nhỏ hơn 5MB.';
-        setError(userErrorMsg);
-      }
-      
-      showNotification(userErrorMsg, 'error');
-    } finally {
-      setUploading(false);
-    }
-  };
 
   if (loading) {
     return (

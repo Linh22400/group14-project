@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   getAllActivityLogs, 
   getActivityStats, 
@@ -28,7 +28,7 @@ const AdminActivityLogs = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
-  const [exportFormat, setExportFormat] = useState('csv');
+  const [exportFormat] = useState('csv');
   const [cleanupDays, setCleanupDays] = useState(30); // Đổi từ 90 sang 30 ngày
   const [deleteAllMode, setDeleteAllMode] = useState(false); // Thêm mode xóa hết
   const [autoReload, setAutoReload] = useState(true); // Tự động reload sau khi xóa
@@ -39,7 +39,7 @@ const AdminActivityLogs = () => {
     fetchActivityLogs();
     fetchActivityStats();
     fetchFailedLoginAttempts();
-  }, [currentPage, filters, fetchActivityLogs]);
+  }, [currentPage, filters, fetchActivityLogs, fetchActivityStats, fetchFailedLoginAttempts]);
 
   // Thêm useEffect để fetch lại khi component được mount lại sau khi đăng nhập
   useEffect(() => {
@@ -54,7 +54,7 @@ const AdminActivityLogs = () => {
     return () => window.removeEventListener('focus', handleFocus);
   }, [error, loading, fetchActivityLogs]);
 
-  const fetchActivityLogs = async () => {
+  const fetchActivityLogs = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -98,9 +98,9 @@ const AdminActivityLogs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, filters, logsPerPage]);
 
-  const fetchActivityStats = async () => {
+  const fetchActivityStats = useCallback(async () => {
     try {
       const response = await getActivityStats();
       console.log('Activity stats response:', response);
@@ -142,9 +142,9 @@ const AdminActivityLogs = () => {
     } catch (err) {
       console.error('Error fetching activity stats:', err);
     }
-  };
+  }, []);
 
-  const fetchFailedLoginAttempts = async () => {
+  const fetchFailedLoginAttempts = useCallback(async () => {
     try {
       const response = await getFailedLoginAttempts({ limit: 50 });
       console.log('Failed login attempts response:', response);
@@ -156,7 +156,7 @@ const AdminActivityLogs = () => {
     } catch (err) {
       console.error('Error fetching failed login attempts:', err);
     }
-  };
+  }, []);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({
