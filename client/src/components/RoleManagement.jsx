@@ -86,7 +86,7 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
     setNotification('');
 
     try {
-      const result = await adminService.updateUserRole(userId, newRole);
+      await adminService.updateUserRole(userId, newRole);
       
       // Cập nhật role trong state
       setUsers(users.map(user => 

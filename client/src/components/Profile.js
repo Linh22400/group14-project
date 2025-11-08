@@ -10,7 +10,6 @@ const Profile = ({ onUpdateClick }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [uploading, setUploading] = useState(false);
 
   // Helper function để xử lý avatar URL
   const getAvatarUrl = (avatarUrl) => {
@@ -27,7 +26,7 @@ const Profile = ({ onUpdateClick }) => {
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [fetchProfile]);
 
   const fetchProfile = async () => {
     try {
@@ -58,6 +57,8 @@ const Profile = ({ onUpdateClick }) => {
   const handleRefresh = () => {
     fetchProfile();
   };
+
+  const [uploading, setUploading] = useState(false);
 
   const handleAvatarUpload = async (event) => {
     const file = event.target.files[0];

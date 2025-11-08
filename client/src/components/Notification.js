@@ -13,7 +13,7 @@ const Notification = ({ message, type = 'error', duration = 3000, onClose }) => 
       }, duration);
       return () => clearTimeout(timer);
     }
-  }, [message, duration]);
+  }, [message, duration, handleClose]);
 
   const handleClose = () => {
     setIsExiting(true);

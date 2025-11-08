@@ -20,7 +20,7 @@ const UserActivityLogs = () => {
 
   useEffect(() => {
     fetchActivityLogs();
-  }, [currentPage, filters, fetchActivityLogs]);
+  }, [currentPage, filters]);
 
   const fetchActivityLogs = useCallback(async () => {
     try {
@@ -65,7 +65,7 @@ const UserActivityLogs = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage, filters, logsPerPage]);
 
   // Thêm useEffect để fetch lại khi component được mount lại sau khi đăng nhập
   useEffect(() => {
