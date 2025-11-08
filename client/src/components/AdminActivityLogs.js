@@ -35,25 +35,6 @@ const AdminActivityLogs = () => {
 
   const logsPerPage = 20;
 
-  useEffect(() => {
-    fetchActivityLogs();
-    fetchActivityStats();
-    fetchFailedLoginAttempts();
-  }, [currentPage, filters, fetchActivityLogs, fetchActivityStats, fetchFailedLoginAttempts]);
-
-  // Thêm useEffect để fetch lại khi component được mount lại sau khi đăng nhập
-  useEffect(() => {
-    const handleFocus = () => {
-      // Khi tab/window được focus lại, thử fetch lại nếu có lỗi
-      if (error && !loading) {
-        fetchActivityLogs();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [error, loading, fetchActivityLogs]);
-
   const fetchActivityLogs = useCallback(async () => {
     try {
       setLoading(true);
@@ -157,6 +138,25 @@ const AdminActivityLogs = () => {
       console.error('Error fetching failed login attempts:', err);
     }
   }, []);
+
+  useEffect(() => {
+    fetchActivityLogs();
+    fetchActivityStats();
+    fetchFailedLoginAttempts();
+  }, [currentPage, filters, fetchActivityLogs, fetchActivityStats, fetchFailedLoginAttempts]);
+
+  // Thêm useEffect để fetch lại khi component được mount lại sau khi đăng nhập
+  useEffect(() => {
+    const handleFocus = () => {
+      // Khi tab/window được focus lại, thử fetch lại nếu có lỗi
+      if (error && !loading) {
+        fetchActivityLogs();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [error, loading, fetchActivityLogs]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({

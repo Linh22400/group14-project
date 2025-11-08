@@ -6,7 +6,7 @@ import AvatarUpload from './AvatarUpload';
 import './Profile.css';
 
 const Profile = ({ onUpdateClick }) => {
-  const { showNotification } = useNotification();
+  const { showNotification } = useNotification(); // eslint-disable-line no-unused-vars
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

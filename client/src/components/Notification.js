@@ -4,6 +4,15 @@ const Notification = ({ message, type = 'error', duration = 3000, onClose }) => 
   const [isVisible, setIsVisible] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
 
+  const handleClose = useCallback(() => {
+    setIsExiting(true);
+    // Wait for exit animation then call onClose
+    setTimeout(() => {
+      setIsVisible(false);
+      if (onClose) onClose();
+    }, 300);
+  }, [onClose]);
+
   useEffect(() => {
     if (message) {
       setIsVisible(true);
@@ -14,15 +23,6 @@ const Notification = ({ message, type = 'error', duration = 3000, onClose }) => 
       return () => clearTimeout(timer);
     }
   }, [message, duration, handleClose]);
-
-  const handleClose = useCallback(() => {
-    setIsExiting(true);
-    // Wait for exit animation then call onClose
-    setTimeout(() => {
-      setIsVisible(false);
-      if (onClose) onClose();
-    }, 300);
-  }, [onClose]);
 
   if (!message || !isVisible) return null;
 
