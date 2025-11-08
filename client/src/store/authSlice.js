@@ -17,7 +17,8 @@ export const login = createAsyncThunk(
       let errorMessage = 'Không thể kết nối đến server. Vui lòng thử lại sau.';
       
       if (error.message) {
-        if (error.message.includes('429') || error.status === 429) {
+        // Kiểm tra status code trước tiên
+        if (error.status === 429) {
           // Lấy thời gian chờ từ server response nếu có
           const retryAfter = error.serverData?.retryAfter || 30;
           if (retryAfter <= 60) {
@@ -26,13 +27,20 @@ export const login = createAsyncThunk(
             const minutes = Math.ceil(retryAfter / 60);
             errorMessage = `Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau ${minutes} phút.`;
           }
-        } else if (error.message.includes('401') || error.status === 401) {
+        } else if (error.status === 401) {
           errorMessage = 'Email hoặc mật khẩu không đúng.';
+        } else if (error.status === 400) {
+          errorMessage = 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+        } else if (error.status === 423) {
+          // IP blocked
+          const retryAfter = error.serverData?.retryAfter || 30;
+          errorMessage = `IP của bạn đã bị chặn. Vui lòng thử lại sau ${retryAfter} giây.`;
         } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
           errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
         } else if (error.message.includes('timeout')) {
           errorMessage = 'Yêu cầu bị timeout. Vui lòng thử lại.';
         } else {
+          // Sử dụng message từ server nếu có
           errorMessage = error.message;
         }
       }
