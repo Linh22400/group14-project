@@ -6,7 +6,9 @@ export const buildApiUrl = (endpoint) => {
   return `${API_BASE_URL}${endpoint}`;
 };
 
-export default {
+const apiConfig = {
   API_BASE_URL,
   buildApiUrl
 };
+
+export default apiConfig;
