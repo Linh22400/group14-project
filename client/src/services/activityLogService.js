@@ -202,7 +202,7 @@ export const getActionColor = (action) => {
   return colorMap[action] || 'secondary';
 };
 
-export default {
+const activityLogService = {
   getMyActivityLogs,
   getAllActivityLogs,
   getActivityStats,
@@ -212,3 +212,5 @@ export default {
   formatActivityLog,
   getActionColor
 };
+
+export default activityLogService;

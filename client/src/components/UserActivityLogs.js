@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getMyActivityLogs, formatActivityLog, getActionColor } from '../services/activityLogService';
 import './UserActivityLogs.css';
 
@@ -22,20 +22,7 @@ const UserActivityLogs = () => {
     fetchActivityLogs();
   }, [currentPage, filters]);
 
-  // Thêm useEffect để fetch lại khi component được mount lại sau khi đăng nhập
-  useEffect(() => {
-    const handleFocus = () => {
-      // Khi tab/window được focus lại, thử fetch lại nếu có lỗi
-      if (error && !loading) {
-        fetchActivityLogs();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [error, loading]);
-
-  const fetchActivityLogs = async () => {
+  const fetchActivityLogs = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -78,7 +65,20 @@ const UserActivityLogs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Thêm useEffect để fetch lại khi component được mount lại sau khi đăng nhập
+  useEffect(() => {
+    const handleFocus = () => {
+      // Khi tab/window được focus lại, thử fetch lại nếu có lỗi
+      if (error && !loading) {
+        fetchActivityLogs();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [error, loading, fetchActivityLogs]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import useValidation from '../hooks/useValidation';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
@@ -18,7 +18,7 @@ const UserList = () => {
   const usersPerPage = 4; // Mỗi trang hiển thị 4 người dùng
 
   // Lấy danh sách users từ API
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -55,17 +55,11 @@ const UserList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showNotification]);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
-
-  // Chỉ fetch khi component mount hoặc có sự kiện cụ thể
-  useEffect(() => {
-    console.log('UserList mounted, fetching users...');
-    fetchUsers();
-  }, []); // Chỉ chạy 1 lần khi mount
+  }, [fetchUsers]);
 
   // Reset về trang 1 khi danh sách users thay đổi
   useEffect(() => {
@@ -86,7 +80,7 @@ const UserList = () => {
       window.removeEventListener('userAdded', handleRefresh);
       window.removeEventListener('userRoleUpdated', handleRefresh);
     };
-  }, []);
+  }, [fetchUsers]);
 
   // Xóa user
   const handleDelete = async (userId) => {
