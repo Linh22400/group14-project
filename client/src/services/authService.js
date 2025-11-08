@@ -1,3 +1,5 @@
+import { buildApiUrl } from '../config/api';
+
 // Auth service để quản lý authentication
 class AuthService {
   constructor() {
@@ -91,7 +93,7 @@ class AuthService {
         throw new Error('No refresh token available');
       }
 
-      const response = await fetch('http://localhost:3000/api/auth/refresh', {
+      const response = await fetch(buildApiUrl('/api/auth/refresh'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -218,7 +220,7 @@ class AuthService {
 
   // Quên mật khẩu
   async forgotPassword(email) {
-    const response = await fetch('http://localhost:3000/api/auth/forgot-password', {
+    const response = await fetch(buildApiUrl('/api/auth/forgot-password'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -237,7 +239,7 @@ class AuthService {
   // Đặt lại mật khẩu
   async resetPassword(token, newPassword) {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/reset-password', {
+      const response = await fetch(buildApiUrl('/api/auth/reset-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -274,7 +276,7 @@ class AuthService {
 
   // Xác thực mã 4 chữ số và đặt lại mật khẩu
   async verifyResetCode(email, resetCode, newPassword) {
-    const response = await fetch('http://localhost:3000/api/auth/verify-reset-code', {
+    const response = await fetch(buildApiUrl('/api/auth/verify-reset-code'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -293,7 +295,7 @@ class AuthService {
   // Login
   async login(email, password) {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch(buildApiUrl('/api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -361,7 +363,7 @@ class AuthService {
       // Không set Content-Type để browser tự động set với boundary
     };
 
-    const response = await this.authenticatedFetch('http://localhost:3000/api/avatar/upload-avatar', {
+    const response = await this.authenticatedFetch(buildApiUrl('/api/avatar/upload-avatar'), {
       method: 'POST',
       body: formData,
       headers: uploadHeaders
@@ -371,7 +373,7 @@ class AuthService {
     
     // Đảm bảo avatar URL được trả về đầy đủ
     if (result.avatar && !result.avatar.startsWith('http')) {
-      result.avatar = `http://localhost:3000/api/${result.avatar.replace(/\\/g, '/')}`;
+      result.avatar = `${buildApiUrl('')}/api/${result.avatar.replace(/\\/g, '/')}`;
     }
     
     return result;
@@ -379,7 +381,7 @@ class AuthService {
 
   // Signup
   async signup(name, email, password) {
-    const response = await fetch('http://localhost:3000/api/auth/signup', {
+    const response = await fetch(buildApiUrl('/api/auth/signup'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

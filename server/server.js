@@ -19,9 +19,28 @@ app.use((req, res, next) => {
   next();
 });
 
-// CORS configuration for production
+// CORS configuration for production - support multiple domains
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://group14-project-g8ybdalgr-linhs-projects-ef57d46f.vercel.app',
+  'https://group14-project-jcf0zfu0c-linhs-projects-ef57d46f.vercel.app',
+  'https://group14-project-livid.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:3001'
+].filter(Boolean); // Remove undefined/null values
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log(`❌ CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
