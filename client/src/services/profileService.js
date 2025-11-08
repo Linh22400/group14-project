@@ -1,6 +1,7 @@
 import authService from './authService';
+import { buildApiUrl } from '../config/api';
 
-const API_URL = 'http://localhost:3000/api/profile';
+const API_URL = buildApiUrl('/api/profile');
 
 const profileService = {
   // Lấy thông tin profile

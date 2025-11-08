@@ -1,12 +1,11 @@
 import authService from './authService';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+import { buildApiUrl } from '../config/api';
 
 class AdminService {
   // Lấy danh sách tất cả người dùng (cho admin)
   async getAllUsers() {
     try {
-      const response = await fetch(`${API_URL}/api/admin/users`, {
+      const response = await fetch(buildApiUrl('/api/admin/users'), {
         headers: {
           'Authorization': `Bearer ${authService.getAccessToken()}`,
           'Content-Type': 'application/json'
@@ -28,7 +27,7 @@ class AdminService {
   // Cập nhật vai trò người dùng
   async updateUserRole(userId, role) {
     try {
-      const response = await fetch(`${API_URL}/api/admin/users/${userId}/role`, {
+      const response = await fetch(buildApiUrl(`/api/admin/users/${userId}/role`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${authService.getAccessToken()}`,
@@ -58,7 +57,7 @@ class AdminService {
         throw new Error('Không có token xác thực');
       }
 
-      const response = await fetch(`${API_URL}/api/admin/users/stats`, {
+      const response = await fetch(buildApiUrl('/api/admin/users/stats'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -134,7 +133,7 @@ class AdminService {
   // Xóa người dùng (admin chức năng)
   async deleteUser(userId) {
     try {
-      const response = await fetch(`${API_URL}/api/admin/users/${userId}`, {
+      const response = await fetch(buildApiUrl(`/api/admin/users/${userId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${authService.getAccessToken()}`,
@@ -163,7 +162,7 @@ class AdminService {
         throw new Error('Không có token xác thực');
       }
 
-      const response = await fetch(`${API_URL}/api/admin/users`, {
+      const response = await fetch(buildApiUrl('/api/admin/users'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

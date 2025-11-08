@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
+import { buildApiUrl } from '../config/api';
 import './Auth.css';
 
 const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
@@ -81,7 +82,7 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
     setErrors({});
 
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/signup', {
+      const response = await axios.post(buildApiUrl('/api/auth/signup'), {
         name: formData.name,
         email: formData.email,
         password: formData.password

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import useValidation from '../hooks/useValidation';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
+import { buildApiUrl } from '../config/api';
 
 const UserList = () => {
   const { showNotification } = useNotification();
@@ -23,7 +24,7 @@ const UserList = () => {
       setLoading(true);
       
       // Sử dụng authenticatedFetch để tự động refresh token nếu cần
-      const response = await authService.authenticatedFetch('http://localhost:3000/api/admin/users');
+      const response = await authService.authenticatedFetch(buildApiUrl('/api/admin/users'));
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -87,7 +88,7 @@ const UserList = () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
       try {
         const response = await authService.authenticatedFetch(
-          `http://localhost:3000/api/admin/users/${userId}`,
+          buildApiUrl(`/api/admin/users/${userId}`),
           { method: 'DELETE' }
         );
         
@@ -196,7 +197,7 @@ const UserList = () => {
 
     try {
       const response = await authService.authenticatedFetch(
-        `http://localhost:3000/api/admin/users/${editingUser.id}`,
+        buildApiUrl(`/api/admin/users/${editingUser.id}`),
         {
           method: 'PUT',
           headers: {

@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+import { buildApiUrl } from '../config/api';
 
 // Get auth token from localStorage
 const getAuthToken = () => {
@@ -10,7 +9,7 @@ const getAuthToken = () => {
 
 // Create axios instance with auth header
 const axiosInstance = axios.create({
-  baseURL: API_URL,
+  baseURL: buildApiUrl('/api'),
 });
 
 axiosInstance.interceptors.request.use(

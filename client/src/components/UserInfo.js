@@ -1,5 +1,6 @@
 import React from 'react';
 import authService from '../services/authService';
+import { buildApiUrl } from '../config/api';
 import './UserInfo.css';
 
 const UserInfo = ({ user, onLogout }) => {
@@ -8,7 +9,7 @@ const UserInfo = ({ user, onLogout }) => {
       // Gọi API logout (tùy chọn)
       const token = authService.getAccessToken();
       if (token) {
-        await fetch('http://localhost:3000/api/auth/logout', {
+        await fetch(buildApiUrl('/api/auth/logout'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

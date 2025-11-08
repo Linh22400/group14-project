@@ -3,6 +3,7 @@ import profileService from '../services/profileService';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
 import AvatarUpload from './AvatarUpload';
+import { buildApiUrl } from '../config/api';
 import './Profile.css';
 
 const Profile = ({ onUpdateClick }) => {
@@ -21,7 +22,7 @@ const Profile = ({ onUpdateClick }) => {
     }
     
     // Nếu là đường dẫn tương đối, thêm base URL
-    return `http://localhost:3000/api/${avatarUrl.replace(/\\/g, '/')}`;
+    return `${buildApiUrl('')}/api/${avatarUrl.replace(/\\/g, '/')}`;
   };
 
   const fetchProfile = useCallback(async () => {

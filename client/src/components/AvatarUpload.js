@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
+import { buildApiUrl } from '../config/api';
 import './AvatarUpload.css';
 
 const AvatarUpload = ({ currentAvatar, onAvatarChange, user }) => {
@@ -19,7 +20,7 @@ const AvatarUpload = ({ currentAvatar, onAvatarChange, user }) => {
     }
     
     // Nếu là đường dẫn tương đối, thêm base URL
-    return `http://localhost:3000/api/${avatarUrl.replace(/\\/g, '/')}`;
+    return buildApiUrl(`/${avatarUrl.replace(/\\/g, '/')}`);
   };
 
   const handleFileSelect = (event) => {

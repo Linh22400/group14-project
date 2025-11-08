@@ -1,9 +1,10 @@
 // API service với tự động refresh token
 import authService from './authService';
+import { buildApiUrl } from '../config/api';
 
 class ApiService {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+    this.baseURL = buildApiUrl('/api');
   }
 
   // Tạo headers với authentication

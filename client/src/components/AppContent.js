@@ -1,6 +1,6 @@
 import React from 'react';
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { checkAuth, selectAuth } from '../store/authSlice';
 import UserList from '../components/UserList';
 import AddUser from '../components/AddUser';
@@ -14,6 +14,7 @@ import ResetPassword from '../components/ResetPassword';
 import UserActivityLogs from '../components/UserActivityLogs';
 import AdminActivityLogs from '../components/AdminActivityLogs';
 import authService from '../services/authService';
+import { buildApiUrl } from '../config/api';
 
 function AppContent() {
   const dispatch = useDispatch();
@@ -62,7 +63,7 @@ function AppContent() {
     try {
       const token = authService.getAccessToken();
       if (token) {
-        const response = await fetch('http://localhost:3000/api/auth/me', {
+        const response = await fetch(buildApiUrl('/api/auth/me'), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
