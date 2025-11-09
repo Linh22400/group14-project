@@ -40,13 +40,20 @@ const AdminActivityLogs = () => {
       setLoading(true);
       setError(null);
       
+      // Filter out empty values
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+      );
+      
       const params = {
         page: currentPage,
         limit: logsPerPage,
-        ...filters
+        ...cleanFilters
       };
 
+      console.log('Fetching admin logs with params:', params);
       const response = await getAllActivityLogs(params);
+      console.log('Admin logs response:', response);
       console.log('Activity logs response:', response);
       
       if (response.success) {
@@ -127,7 +134,19 @@ const AdminActivityLogs = () => {
 
   const fetchFailedLoginAttempts = useCallback(async () => {
     try {
-      const response = await getFailedLoginAttempts({ limit: 50 });
+      // Filter out empty values
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+      );
+      
+      const params = {
+        limit: 50,
+        page: 1,
+        ...cleanFilters
+      };
+      
+      console.log('Fetching failed logins with params:', params);
+      const response = await getFailedLoginAttempts(params);
       console.log('Failed login attempts response:', response);
       if (response.success && response.data) {
         // Format logs để hiển thị đúng
@@ -137,13 +156,13 @@ const AdminActivityLogs = () => {
     } catch (err) {
       console.error('Error fetching failed login attempts:', err);
     }
-  }, []);
+  }, [filters]);
 
   useEffect(() => {
     fetchActivityLogs();
     fetchActivityStats();
     fetchFailedLoginAttempts();
-  }, [currentPage, filters, fetchActivityLogs, fetchActivityStats, fetchFailedLoginAttempts]);
+  }, [currentPage, filters]); // Loại bỏ các fetch functions để tránh infinite loop
 
   // Thêm useEffect để fetch lại khi component được mount lại sau khi đăng nhập
   useEffect(() => {
@@ -156,12 +175,22 @@ const AdminActivityLogs = () => {
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [error, loading, fetchActivityLogs]);
+  }, [error, loading]); // Loại bỏ fetchActivityLogs để tránh infinite loop
 
   const handleFilterChange = (field, value) => {
+    let formattedValue = value;
+    
+    // Format date values to ensure consistency
+    if (field === 'startDate' || field === 'endDate') {
+      if (value) {
+        // Input date đã ở định dạng YYYY-MM-DD, không cần format lại
+        formattedValue = value;
+      }
+    }
+    
     setFilters(prev => ({
       ...prev,
-      [field]: value
+      [field]: formattedValue
     }));
     setCurrentPage(1);
   };
@@ -488,6 +517,15 @@ const AdminActivityLogs = () => {
             <button onClick={clearFilters} className="btn btn-outline-secondary">
               Xóa bộ lọc
             </button>
+            {(filters.action || filters.success !== '' || filters.userId || filters.startDate || filters.endDate) && (
+              <span className="filter-status">Đang lọc theo: {[
+                filters.action && `Hành động: ${filters.action}`,
+                filters.success !== '' && `Trạng thái: ${filters.success === 'true' ? 'Thành công' : 'Thất bại'}`,
+                filters.userId && `User ID: ${filters.userId}`,
+                filters.startDate && `Từ: ${filters.startDate}`,
+                filters.endDate && `Đến: ${filters.endDate}`
+              ].filter(Boolean).join(', ')}</span>
+            )}
           </div>
         </div>
       )}

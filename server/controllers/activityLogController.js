@@ -8,18 +8,43 @@ const User = require('../models/User');
 const getMyActivityLogs = async (req, res) => {
   try {
     const userId = req.user.id || req.user._id;
-    const { limit = 50, page = 1 } = req.query;
+    const { limit = 50, page = 1, action, startDate, endDate } = req.query;
     
     const limitNum = Math.min(parseInt(limit), 100); // Max 100 per page
     const skip = (parseInt(page) - 1) * limitNum;
     
-    const logs = await ActivityLog.find({ userId })
+    // Build query with filters
+    const query = { userId };
+    
+    // Filter by action
+    if (action) {
+      query.action = action;
+    }
+    
+    // Filter by date range
+    if (startDate || endDate) {
+      query.timestamp = {};
+      if (startDate) {
+        // Set start of day in local timezone
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        query.timestamp.$gte = start;
+      }
+      if (endDate) {
+        // Set end of day in local timezone
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.timestamp.$lte = end;
+      }
+    }
+    
+    const logs = await ActivityLog.find(query)
       .sort({ timestamp: -1 })
       .skip(skip)
       .limit(limitNum)
       .lean();
     
-    const total = await ActivityLog.countDocuments({ userId });
+    const total = await ActivityLog.countDocuments(query);
     
     res.json({
       success: true,
@@ -55,6 +80,7 @@ const getAllActivityLogs = async (req, res) => {
       action, 
       startDate, 
       endDate,
+      success,
       search 
     } = req.query;
     
@@ -72,13 +98,24 @@ const getAllActivityLogs = async (req, res) => {
       query.action = action;
     }
     
+    // Filter by success status
+    if (success !== undefined && success !== '') {
+      query.success = success === 'true';
+    }
+    
     if (startDate || endDate) {
       query.timestamp = {};
       if (startDate) {
-        query.timestamp.$gte = new Date(startDate);
+        // Set start of day in local timezone
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        query.timestamp.$gte = start;
       }
       if (endDate) {
-        query.timestamp.$lte = new Date(endDate);
+        // Set end of day in local timezone
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.timestamp.$lte = end;
       }
     }
     
@@ -142,10 +179,16 @@ const getActivityStats = async (req, res) => {
     if (startDate || endDate) {
       matchStage.timestamp = {};
       if (startDate) {
-        matchStage.timestamp.$gte = new Date(startDate);
+        // Set start of day in local timezone
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        matchStage.timestamp.$gte = start;
       }
       if (endDate) {
-        matchStage.timestamp.$lte = new Date(endDate);
+        // Set end of day in local timezone
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        matchStage.timestamp.$lte = end;
       }
     }
     
@@ -234,7 +277,7 @@ const getActivityStats = async (req, res) => {
  */
 const getFailedLoginAttempts = async (req, res) => {
   try {
-    const { limit = 50, page = 1, ipAddress, email } = req.query;
+    const { limit = 50, page = 1, ipAddress, email, startDate, endDate } = req.query;
     
     const limitNum = Math.min(parseInt(limit), 100);
     const skip = (parseInt(page) - 1) * limitNum;
@@ -247,6 +290,23 @@ const getFailedLoginAttempts = async (req, res) => {
     
     if (email) {
       query['details.email'] = email;
+    }
+    
+    // Filter by date range
+    if (startDate || endDate) {
+      query.timestamp = {};
+      if (startDate) {
+        // Set start of day in local timezone
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        query.timestamp.$gte = start;
+      }
+      if (endDate) {
+        // Set end of day in local timezone
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.timestamp.$lte = end;
+      }
     }
     
     const logs = await ActivityLog.find(query)

@@ -23,13 +23,20 @@ const UserActivityLogs = () => {
       setLoading(true);
       setError(null);
       
+      // Filter out empty values
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+      );
+      
       const params = {
         page: currentPage,
         limit: logsPerPage,
-        ...filters
+        ...cleanFilters
       };
 
+      console.log('Fetching logs with params:', params);
       const response = await getMyActivityLogs(params);
+      console.log('Logs response:', response);
       
       if (response.success) {
         const formattedLogs = response.data.logs.map(formatActivityLog);
@@ -65,7 +72,7 @@ const UserActivityLogs = () => {
 
   useEffect(() => {
     fetchActivityLogs();
-  }, [currentPage, filters, fetchActivityLogs]);
+  }, [currentPage, filters]); // Loại bỏ fetchActivityLogs để tránh infinite loop
 
   // Thêm useEffect để fetch lại khi component được mount lại sau khi đăng nhập
   useEffect(() => {
@@ -78,12 +85,22 @@ const UserActivityLogs = () => {
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [error, loading, fetchActivityLogs]);
+  }, [error, loading]); // Loại bỏ fetchActivityLogs để tránh infinite loop
 
   const handleFilterChange = (field, value) => {
+    let formattedValue = value;
+    
+    // Format date values to ensure consistency
+    if (field === 'startDate' || field === 'endDate') {
+      if (value) {
+        // Input date đã ở định dạng YYYY-MM-DD, không cần format lại
+        formattedValue = value;
+      }
+    }
+    
     setFilters(prev => ({
       ...prev,
-      [field]: value
+      [field]: formattedValue
     }));
     setCurrentPage(1);
   };
@@ -291,6 +308,13 @@ const UserActivityLogs = () => {
             <button onClick={clearFilters} className="btn btn-outline-secondary">
               Xóa bộ lọc
             </button>
+            {(filters.action || filters.startDate || filters.endDate) && (
+              <span className="filter-status">Đang lọc theo: {[
+                filters.action && `Hành động: ${filters.action}`,
+                filters.startDate && `Từ: ${filters.startDate}`,
+                filters.endDate && `Đến: ${filters.endDate}`
+              ].filter(Boolean).join(', ')}</span>
+            )}
           </div>
         </div>
       )}
