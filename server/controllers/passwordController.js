@@ -1,6 +1,13 @@
 const crypto = require('crypto');
 const User = require('../models/User');
-const { sendResetPasswordEmail } = require('../services/emailService');
+
+// Chọn email service dựa trên multi-provider mode
+const useMultiProvider = process.env.USE_MULTI_EMAIL_PROVIDER === 'true';
+const emailService = useMultiProvider 
+  ? require('../services/emailServiceMulti')
+  : require('../services/emailService');
+
+const { sendResetPasswordEmail } = emailService;
 
 // Quên mật khẩu - gửi token reset password qua email
 exports.forgotPassword = async (req, res) => {
