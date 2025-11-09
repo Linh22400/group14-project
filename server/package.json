@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node --optimize-for-size --max-old-space-size=512 server.js",
     "dev": "nodemon server.js",
-    "prod": "NODE_ENV=production node server.js",
+    "prod": "NODE_ENV=production node --optimize-for-size --max-old-space-size=512 server.js",
+    "railway": "cd server && npm start",
     "install-prod": "npm ci --omit=dev",
     "health-check": "curl http://localhost:3000/health",
     "deploy-check": "node pre-deploy-check.js"

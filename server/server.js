@@ -68,6 +68,7 @@ app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 // import middleware
 const { autoLogActivity } = require('./middleware/activityLogger');
 const { generalRateLimiter } = require('./middleware/rateLimiter');
+const { startMemoryMonitoring } = require('./memory-manager');
 
 // Apply general rate limiting to all API routes
 app.use('/api', generalRateLimiter);
@@ -78,7 +79,18 @@ app.use('/api', autoLogActivity);
 // Kết nối MongoDB Atlas với cấu hình production
 const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/groupDB';
 
-mongoose.connect(mongoURI)
+// Cấu hình mongoose cho Railway
+mongoose.set('bufferCommands', false);
+mongoose.set('bufferTimeoutMS', 30000);
+
+mongoose.connect(mongoURI, {
+  serverSelectionTimeoutMS: 30000, // 30 giây cho Railway
+  socketTimeoutMS: 45000, // 45 giây
+  connectTimeoutMS: 30000, // 30 giây
+  maxPoolSize: 10,
+  retryWrites: true,
+  w: 'majority'
+})
 .then(() => {
   console.log('✅ Kết nối MongoDB Atlas thành công!');
   console.log('📊 MongoDB Status:', mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected');
@@ -87,7 +99,14 @@ mongoose.connect(mongoURI)
   console.error('❌ Lỗi kết nối MongoDB:', err.message);
   console.error('🔄 Thử kết nối lại sau 5 giây...');
   setTimeout(() => {
-    mongoose.connect(mongoURI)
+    mongoose.connect(mongoURI, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 30000,
+      maxPoolSize: 10,
+      retryWrites: true,
+      w: 'majority'
+    })
       .then(() => console.log('✅ Kết nối MongoDB thành công sau retry!'))
       .catch(err => console.error('❌ Lỗi kết nối MongoDB sau retry:', err.message));
   }, 5000);
@@ -145,23 +164,49 @@ app.use('/api', userRoutes);
 
 const PORT = process.env.PORT || 3000;
 
+// Railway startup timeout - đảm bảo server khởi động trong 60 giây
+const STARTUP_TIMEOUT = 60000;
+let serverStarted = false;
+
 // Production-ready server startup
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
+  serverStarted = true;
   console.log('🚀 Server started successfully!');
   console.log(`📡 PORT: ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`⏰ Started at: ${new Date().toISOString()}`);
   console.log(`🎯 Health check: http://localhost:${PORT}/health`);
   console.log(`📊 API status: http://localhost:${PORT}/api/status`);
+  
+  // Start memory monitoring sau khi server khởi động
+  startMemoryMonitoring();
 });
 
-// Graceful shutdown
+// Timeout cho Railway - nếu server không khởi động trong 60s thì thoát
+setTimeout(() => {
+  if (!serverStarted) {
+    console.error('❌ Server failed to start within 60 seconds');
+    console.error('💡 Check MongoDB connection and environment variables');
+    process.exit(1);
+  }
+}, STARTUP_TIMEOUT);
+
+// Graceful shutdown - cải thiện cho Railway
 process.on('SIGTERM', () => {
   console.log('🔄 SIGTERM received, shutting down gracefully');
+  console.log('⏰ Shutdown timeout: 30 giây');
+  
+  // Force exit sau 30 giây nếu graceful shutdown không hoàn thành
+  const forceExit = setTimeout(() => {
+    console.error('❌ Force exit after 30 seconds');
+    process.exit(1);
+  }, 30000);
+  
   server.close(() => {
     console.log('✅ Server closed');
     mongoose.connection.close(false, () => {
       console.log('✅ MongoDB connection closed');
+      clearTimeout(forceExit);
       process.exit(0);
     });
   });
@@ -176,6 +221,17 @@ process.on('SIGINT', () => {
       process.exit(0);
     });
   });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
 
 // Error handler toàn cục
