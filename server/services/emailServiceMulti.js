@@ -78,7 +78,7 @@ const smtpTransporter = nodemailer.createTransport({
 providers.smtp.config = smtpTransporter;
 
 // Hàm gửi email với auto-fallback
-const sendEmailWithFallback = async (email, subject, html, text = null) => {
+const sendEmailWithFallback = async (email, subject, html, text = '') => {
   const errors = [];
   
   // Sắp xếp providers theo priority
@@ -96,14 +96,26 @@ const sendEmailWithFallback = async (email, subject, html, text = null) => {
       
       switch (provider.name) {
         case 'SendGrid':
-          const msg = {
-            to: email,
-            from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-            subject: subject,
-            html: html,
-            text: text
-          };
-          result = await sgMail.send(msg);
+          try {
+            const msg = {
+              to: email,
+              from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+              subject: subject,
+              html: html
+            };
+            // Chỉ thêm text nếu có content
+            if (text && text.trim()) {
+              msg.text = text;
+            }
+            
+            console.log(`📤 Đang gửi qua SendGrid với from: ${msg.from}`);
+            result = await sgMail.send(msg);
+            console.log(`✅ SendGrid response:`, result[0]?.statusCode);
+            
+          } catch (sendGridError) {
+            console.error(`❌ SendGrid chi tiết:`, sendGridError.response?.body || sendGridError.message);
+            throw sendGridError;
+          }
           break;
 
         case 'Mailgun':
