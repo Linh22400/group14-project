@@ -4,10 +4,21 @@ const { sendResetPasswordEmail } = require('../services/emailService');
 
 // Quên mật khẩu - gửi token reset password qua email
 exports.forgotPassword = async (req, res) => {
+  // Thiết lập timeout 30 giây cho request này
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      return res.status(504).json({
+        success: false,
+        message: 'Yêu cầu gửi email đã hết thời gian chờ. Vui lòng thử lại sau.'
+      });
+    }
+  }, 30000);
+
   try {
     const { email } = req.body;
 
     if (!email) {
+      clearTimeout(timeout);
       return res.status(400).json({
         success: false,
         message: 'Vui lòng nhập email'
@@ -17,6 +28,7 @@ exports.forgotPassword = async (req, res) => {
     // Tìm user theo email
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
+      clearTimeout(timeout);
       return res.status(404).json({
         success: false,
         message: 'Không tìm thấy người dùng với email này'
@@ -35,8 +47,10 @@ exports.forgotPassword = async (req, res) => {
     // Tạo link reset password (frontend URL)
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/reset-password/${resetToken}`;
 
-    // Gửi email với link reset password
+    // Gửi email với link reset password (có timeout riêng)
     await sendResetPasswordEmail(user.email, resetUrl);
+    
+    clearTimeout(timeout);
     
     res.json({
       success: true,
@@ -44,6 +58,7 @@ exports.forgotPassword = async (req, res) => {
     });
 
   } catch (error) {
+    clearTimeout(timeout);
     console.error('Lỗi forgot password:', error);
     
     // Xử lý lỗi email cụ thể

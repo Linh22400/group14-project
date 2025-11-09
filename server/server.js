@@ -70,6 +70,22 @@ const { autoLogActivity } = require('./middleware/activityLogger');
 const { generalRateLimiter } = require('./middleware/rateLimiter');
 const { startMemoryMonitoring } = require('./memory-manager');
 
+// Request timeout middleware (30 giây)
+app.use((req, res, next) => {
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      res.status(504).json({
+        success: false,
+        message: 'Request timeout - Yêu cầu đã hết thời gian chờ'
+      });
+    }
+  }, 30000);
+
+  res.on('finish', () => clearTimeout(timeout));
+  res.on('close', () => clearTimeout(timeout));
+  next();
+});
+
 // Apply general rate limiting to all API routes
 app.use('/api', generalRateLimiter);
 
