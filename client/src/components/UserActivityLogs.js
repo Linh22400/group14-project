@@ -72,7 +72,7 @@ const UserActivityLogs = () => {
 
   useEffect(() => {
     fetchActivityLogs();
-  }, [currentPage, filters]); // Loại bỏ fetchActivityLogs để tránh infinite loop
+  }, [currentPage, filters, fetchActivityLogs]);
 
   // Thêm useEffect để fetch lại khi component được mount lại sau khi đăng nhập
   useEffect(() => {
@@ -85,7 +85,7 @@ const UserActivityLogs = () => {
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [error, loading]); // Loại bỏ fetchActivityLogs để tránh infinite loop
+  }, [error, loading, fetchActivityLogs]);
 
   const handleFilterChange = (field, value) => {
     let formattedValue = value;
