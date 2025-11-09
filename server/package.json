@@ -13,14 +13,10 @@
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
   },
-  "main": "server.js",
   "keywords": ["railway", "nodejs", "express", "mongodb"],
-  "author": "Your Name",
+  "author": "Group 14",
   "license": "MIT",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "description": "Backend API for Group 14 Project",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.3",
