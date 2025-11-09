@@ -5,13 +5,13 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy file package.json và package-lock.json
-COPY server/package*.json ./
+COPY package*.json ./
 
 # Cài đặt dependencies
 RUN npm ci --only=production
 
 # Copy toàn bộ code server
-COPY server/ ./
+COPY . .
 
 # Tạo thư mục uploads nếu chưa có
 RUN mkdir -p uploads

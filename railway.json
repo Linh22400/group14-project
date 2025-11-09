@@ -1,10 +1,11 @@
 {
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "server/Dockerfile"
+    "dockerfilePath": "server/Dockerfile",
+    "buildContext": "server"
   },
   "deploy": {
-    "startCommand": "cd server && npm start",
+    "startCommand": "npm start",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
