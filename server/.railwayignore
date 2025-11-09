@@ -1,12 +1,14 @@
-# Railway ignore file
-node_modules/
-.env
-.env.local
-.env.development
-.env.test
+# Railway ignore file - chỉ giữ lại server
+client/
+database/
 .git/
 .gitignore
 README.md
 *.md
 uploads/*
 !uploads/.gitkeep
+.env
+.env.local
+.env.development
+.env.test
+node_modules/
