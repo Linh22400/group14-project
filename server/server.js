@@ -25,7 +25,11 @@ const allowedOrigins = [
   'https://group14-project-livid.vercel.app',
   /https:\/\/group14-project-.*-linhs-projects-ef57d46f\.vercel\.app/, // Dynamic pattern for Vercel deployments
   'http://localhost:3000',
-  'http://localhost:3001'
+  'http://localhost:3001',
+  // Railway domains
+  'https://group14-project.railway.internal',
+  /https:\/\/.*\.railway\.app/,
+  /https:\/\/.*\.up\.railway\.app/
 ].filter(Boolean); // Remove undefined/null values
 
 const corsOptions = {
