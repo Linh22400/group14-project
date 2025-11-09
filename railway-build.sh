@@ -1,5 +1,5 @@
 #!/bin/bash
 echo "Installing server dependencies..."
 cd server
-npm install
+npm ci --omit=dev
 echo "Build completed successfully!"
