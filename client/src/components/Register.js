@@ -3,6 +3,7 @@ import axios from 'axios';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
 import { buildApiUrl } from '../config/api';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import './Auth.css';
 
 const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
@@ -15,6 +16,8 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -173,32 +176,56 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
 
           <div className="form-group">
             <label htmlFor="password">Mật khẩu</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Nhập mật khẩu (ít nhất 6 ký tự)"
-              minLength="6"
-              disabled={loading}
-            />
+            <div className="password-input-container">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="Nhập mật khẩu (ít nhất 6 ký tự)"
+                minLength="6"
+                disabled={loading}
+                className="password-input"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
             {errors.password && <span className="field-error">{errors.password}</span>}
           </div>
 
           <div className="form-group">
             <label htmlFor="confirmPassword">Xác nhận mật khẩu</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              placeholder="Nhập lại mật khẩu"
-              disabled={loading}
-            />
+            <div className="password-input-container">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                placeholder="Nhập lại mật khẩu"
+                disabled={loading}
+                className="password-input"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                disabled={loading}
+                aria-label={showConfirmPassword ? 'Ẩn xác nhận mật khẩu' : 'Hiện xác nhận mật khẩu'}
+              >
+                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
             {errors.confirmPassword && <span className="field-error">{errors.confirmPassword}</span>}
           </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import profileService from '../services/profileService';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
@@ -12,11 +13,18 @@ const Profile = ({ onUpdateClick }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showPasswordReset, setShowPasswordReset] = useState(false);
-  const [resetCode, setResetCode] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [sendingCode, setSendingCode] = useState(false);
-  const [resettingPassword, setResettingPassword] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState({
+    length: false,
+    match: false,
+    duplicate: false
+  });
 
   // Helper function để xử lý avatar URL
   const getAvatarUrl = (avatarUrl) => {
@@ -65,60 +73,26 @@ const Profile = ({ onUpdateClick }) => {
     fetchProfile();
   };
 
-  const handleSendResetCode = async () => {
-    try {
-      setSendingCode(true);
-      setError('');
-      
-      const response = await fetch(buildApiUrl('/api/profile/send-reset-code'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authService.getAccessToken()}`
-        }
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        showNotification(data.message, 'success');
-        setShowPasswordReset(true);
-      } else {
-        setError(data.message || 'Không thể gửi mã xác nhận');
-      }
-    } catch (error) {
-      setError('Lỗi khi gửi mã xác nhận');
-      console.error('Lỗi gửi mã xác nhận:', error);
-    } finally {
-      setSendingCode(false);
-    }
-  };
-
-  const handleResetPassword = async (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
     
-    if (newPassword !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự');
+    if (!validatePasswords()) {
+      setError('Vui lòng kiểm tra lại thông tin mật khẩu');
       return;
     }
 
     try {
-      setResettingPassword(true);
+      setChangingPassword(true);
       setError('');
       
-      const response = await fetch(buildApiUrl('/api/profile/reset-password'), {
+      const response = await fetch(buildApiUrl('/api/profile/change-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authService.getAccessToken()}`
         },
         body: JSON.stringify({
-          resetCode,
+          currentPassword,
           newPassword
         })
       });
@@ -129,27 +103,47 @@ const Profile = ({ onUpdateClick }) => {
         showNotification(data.message, 'success');
         // Reset form
         setShowPasswordReset(false);
-        setResetCode('');
+        setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
       } else {
-        setError(data.message || 'Không thể đặt lại mật khẩu');
+        setError(data.message || 'Không thể đổi mật khẩu');
       }
     } catch (error) {
-      setError('Lỗi khi đặt lại mật khẩu');
-      console.error('Lỗi đặt lại mật khẩu:', error);
+      setError('Lỗi khi đổi mật khẩu');
+      console.error('Lỗi đổi mật khẩu:', error);
     } finally {
-      setResettingPassword(false);
+      setChangingPassword(false);
     }
   };
 
+
+
   const handleCancelReset = () => {
     setShowPasswordReset(false);
-    setResetCode('');
+    setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
     setError('');
+    setPasswordErrors({ length: false, match: false, duplicate: false });
   };
+
+  // Validation functions
+  const validatePasswords = useCallback(() => {
+    const errors = {
+      length: newPassword.length > 0 && newPassword.length < 6,
+      match: newPassword && confirmPassword && newPassword !== confirmPassword,
+      duplicate: currentPassword && newPassword && currentPassword === newPassword
+    };
+    setPasswordErrors(errors);
+    return !errors.length && !errors.match && !errors.duplicate;
+  }, [currentPassword, newPassword, confirmPassword]);
+
+  useEffect(() => {
+    if (showPasswordReset) {
+      validatePasswords();
+    }
+  }, [currentPassword, newPassword, confirmPassword, showPasswordReset, validatePasswords]);
 
 
 
@@ -237,67 +231,101 @@ const Profile = ({ onUpdateClick }) => {
             </span>
           </div>
 
-          {/* Password Reset Section */}
-          <div className="password-reset-section">
+          {/* Password Change Section */}
+          <div className="password-change-section">
             {!showPasswordReset ? (
               <button 
-                onClick={handleSendResetCode} 
-                className="reset-password-button"
-                disabled={sendingCode}
+                onClick={() => setShowPasswordReset(true)} 
+                className="change-password-button"
               >
-                {sendingCode ? 'Đang gửi mã...' : '🔒 Đặt lại mật khẩu'}
+                🔒 Đổi mật khẩu
               </button>
             ) : (
-              <div className="password-reset-form">
-                <h3>Đặt lại mật khẩu</h3>
+              <div className="password-change-form">
+                <h3>Đổi mật khẩu</h3>
                 {error && <div className="error-message">{error}</div>}
                 
                 <div className="form-group">
-                  <label>Mã xác nhận (4 chữ số):</label>
-                  <input
-                    type="text"
-                    value={resetCode}
-                    onChange={(e) => setResetCode(e.target.value)}
-                    placeholder="Nhập mã từ email"
-                    maxLength="4"
-                    className="reset-code-input"
-                  />
+                  <label>Mật khẩu hiện tại:</label>
+                  <div className="password-input-container">
+                    <input
+                      type={showCurrentPassword ? "text" : "password"}
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Nhập mật khẩu hiện tại"
+                      className="password-input"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    >
+                      {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="form-group">
                   <label>Mật khẩu mới:</label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
-                    className="password-input"
-                  />
+                  <div className="password-input-container">
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
+                      className="password-input"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
+                  {passwordErrors.length && newPassword.length > 0 && (
+                    <span className="validation-error">Mật khẩu phải có ít nhất 6 ký tự</span>
+                  )}
+                  {passwordErrors.duplicate && newPassword.length > 0 && (
+                    <span className="validation-error">Mật khẩu mới phải khác mật khẩu hiện tại</span>
+                  )}
                 </div>
 
                 <div className="form-group">
-                  <label>Xác nhận mật khẩu:</label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Nhập lại mật khẩu mới"
-                    className="password-input"
-                  />
+                  <label>Xác nhận mật khẩu mới:</label>
+                  <div className="password-input-container">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Nhập lại mật khẩu mới"
+                      className="password-input"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
+                  {passwordErrors.match && confirmPassword.length > 0 && (
+                    <span className="validation-error">Mật khẩu xác nhận không khớp</span>
+                  )}
                 </div>
 
-                <div className="reset-form-actions">
+                <div className="change-form-actions">
                   <button 
-                    onClick={handleResetPassword}
-                    className="confirm-reset-button"
-                    disabled={resettingPassword}
+                    onClick={handleChangePassword}
+                    className="confirm-change-button"
+                    disabled={changingPassword}
                   >
-                    {resettingPassword ? 'Đang xử lý...' : 'Xác nhận đặt lại'}
+                    {changingPassword ? 'Đang xử lý...' : 'Xác nhận đổi mật khẩu'}
                   </button>
                   <button 
                     onClick={handleCancelReset}
-                    className="cancel-reset-button"
-                    disabled={resettingPassword}
+                    className="cancel-change-button"
+                    disabled={changingPassword}
                   >
                     Hủy
                   </button>

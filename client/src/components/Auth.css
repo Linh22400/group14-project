@@ -255,6 +255,16 @@
     font-size: 13px;
   }
   
+  .password-input {
+    padding-right: 40px !important;
+  }
+  
+  .password-toggle {
+    right: 10px;
+    font-size: 14px;
+    padding: 6px;
+  }
+  
   .auth-button {
     padding: 12px;
     font-size: 15px;
@@ -283,4 +293,46 @@
 .success-icon {
   margin-right: 8px;
   font-size: 16px;
+}
+
+/* Password toggle styles */
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input {
+  padding-right: 45px !important;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.password-toggle:hover:not(:disabled) {
+  color: #495057;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.password-toggle:disabled {
+  color: #adb5bd;
+  cursor: not-allowed;
+}
+
+.password-toggle:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
 }

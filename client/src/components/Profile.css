@@ -249,14 +249,14 @@
   }
 }
 
-/* Password Reset Section */
-.password-reset-section {
+/* Password Change Section */
+.password-change-section {
   margin-top: 30px;
   padding-top: 20px;
   border-top: 2px solid #f0f0f0;
 }
 
-.reset-password-button {
+.change-password-button {
   background: linear-gradient(135deg, #ff6b6b, #ee5a24);
   color: white;
   border: none;
@@ -271,36 +271,36 @@
   gap: 8px;
 }
 
-.reset-password-button:hover {
+.change-password-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
 }
 
-.reset-password-button:disabled {
+.change-password-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.password-reset-form {
+.password-change-form {
   background: #f8f9fa;
   padding: 25px;
   border-radius: 12px;
   border: 1px solid #e9ecef;
 }
 
-.password-reset-form h3 {
+.password-change-form h3 {
   margin: 0 0 20px 0;
   color: #333;
   font-size: 18px;
   font-weight: 600;
 }
 
-.password-reset-form .form-group {
+.password-change-form .form-group {
   margin-bottom: 20px;
 }
 
-.password-reset-form label {
+.password-change-form label {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
@@ -308,26 +308,16 @@
   font-size: 14px;
 }
 
-.reset-code-input {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 18px;
-  font-weight: 600;
-  text-align: center;
-  letter-spacing: 4px;
-  transition: border-color 0.3s ease;
-}
-
-.reset-code-input:focus {
-  outline: none;
-  border-color: #667eea;
+/* Password Input with Toggle */
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .password-input {
   width: 100%;
-  padding: 12px;
+  padding: 12px 40px 12px 12px;
   border: 2px solid #e9ecef;
   border-radius: 8px;
   font-size: 14px;
@@ -339,13 +329,38 @@
   border-color: #667eea;
 }
 
-.reset-form-actions {
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 16px;
+  transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+  color: #667eea;
+}
+
+/* Validation Messages */
+.validation-error {
+  display: block;
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+.change-form-actions {
   display: flex;
   gap: 12px;
   margin-top: 25px;
 }
 
-.confirm-reset-button {
+.confirm-change-button {
   flex: 1;
   background: linear-gradient(135deg, #00b894, #00a085);
   color: white;
@@ -358,18 +373,18 @@
   transition: all 0.3s ease;
 }
 
-.confirm-reset-button:hover {
+.confirm-change-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
 }
 
-.confirm-reset-button:disabled {
+.confirm-change-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.cancel-reset-button {
+.cancel-change-button {
   flex: 1;
   background: #6c757d;
   color: white;
@@ -382,28 +397,36 @@
   transition: all 0.3s ease;
 }
 
-.cancel-reset-button:hover {
+.cancel-change-button:hover {
   background: #5a6268;
   transform: translateY(-1px);
 }
 
-.cancel-reset-button:disabled {
+.cancel-change-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
 @media (max-width: 768px) {
-  .password-reset-form {
+  .password-change-form {
     padding: 20px;
   }
   
-  .reset-form-actions {
+  .change-form-actions {
     flex-direction: column;
   }
   
-  .confirm-reset-button,
-  .cancel-reset-button {
+  .confirm-change-button,
+  .cancel-change-button {
     width: 100%;
+  }
+  
+  .password-toggle {
+    font-size: 14px;
+  }
+  
+  .validation-error {
+    font-size: 11px;
   }
 }

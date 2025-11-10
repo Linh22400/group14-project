@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, selectAuth, clearError } from '../store/authSlice';
 import { useNotification } from '../contexts/NotificationContext';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import './Auth.css';
 
 const Login = ({ onSwitchToRegister = () => {} }) => {
@@ -22,6 +23,7 @@ const Login = ({ onSwitchToRegister = () => {} }) => {
     email: '',
     password: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
    
   // State để đếm ngược thời gian chờ khi bị rate limit
   const [retryCountdown, setRetryCountdown] = useState(0);
@@ -149,17 +151,29 @@ const Login = ({ onSwitchToRegister = () => {} }) => {
 
           <div className="form-group">
             <label htmlFor="password">Mật khẩu</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Nhập mật khẩu"
-              minLength="6"
-              disabled={loading}
-            />
+            <div className="password-input-container">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="Nhập mật khẩu"
+                minLength="6"
+                disabled={loading}
+                className="password-input"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </div>
 
           <button 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import './ResetPassword.css';
 
 const ResetPassword = () => {
@@ -11,6 +12,8 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { token } = useParams();
   const navigate = useNavigate();
 
@@ -67,27 +70,49 @@ const ResetPassword = () => {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="password">Mật khẩu mới:</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Nhập mật khẩu mới"
-              minLength="6"
-            />
+            <div className="password-input-container">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Nhập mật khẩu mới"
+                minLength="6"
+                className="password-input"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </div>
           
           <div className="form-group">
             <label htmlFor="confirmPassword">Xác nhận mật khẩu:</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              placeholder="Nhập lại mật khẩu mới"
-            />
+            <div className="password-input-container">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="Nhập lại mật khẩu mới"
+                className="password-input"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                aria-label={showConfirmPassword ? 'Ẩn xác nhận mật khẩu' : 'Hiện xác nhận mật khẩu'}
+              >
+                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </div>
           
           <button type="submit" className="btn btn-primary" disabled={loading}>
