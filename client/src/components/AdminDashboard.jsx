@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import UserList from './UserList';
-import AddUser from './AddUser';
 import RoleManagement from './RoleManagement';
 import AdminStats from './AdminStats';
 import authService from '../services/authService';
+
+// Kiểm tra quyền admin
+const isAdmin = () => {
+  const user = authService.getUser();
+  return user && user.role === 'admin';
+};
 
 const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
   const [activeTab, setActiveTab] = useState('stats');
@@ -40,11 +44,6 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
     };
   }, []);
 
-  // Refresh danh sách user
-  const handleUserAdded = () => {
-    setRefreshKey(prev => prev + 1);
-  };
-
   // Smooth tab switching with transition
   const handleTabChange = (tab) => {
     if (tab === activeTab || isTransitioning) return;
@@ -56,8 +55,8 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
       setActiveTab(tab);
       setIsTransitioning(false);
       
-      // Trigger refresh for certain tabs
-      if (tab === 'users' || tab === 'roles') {
+      // Trigger refresh for roles tab
+      if (tab === 'roles') {
         setRefreshKey(prev => prev + 1);
       }
     }, 150);
@@ -69,12 +68,6 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
   const isAdminOrModerator = () => {
     const user = authService.getUser();
     return user && (user.role === 'admin' || user.role === 'moderator');
-  };
-
-  // Kiểm tra quyền admin
-  const isAdmin = () => {
-    const user = authService.getUser();
-    return user && user.role === 'admin';
   };
 
   if (!isAdminOrModerator()) {
@@ -119,13 +112,7 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
           >
             👑 Quản lý vai trò
           </button>
-          <button 
-            className={`tab-button ${activeTab === 'users' ? 'active' : ''} ${isTransitioning ? 'transitioning' : ''}`}
-            onClick={() => handleTabChange('users')}
-            disabled={isTransitioning}
-          >
-            👥 Quản lý người dùng
-          </button>
+
         </div>
 
         {/* Tab Content */}
@@ -142,18 +129,7 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
               currentUser={currentUser}
             />
           </div>
-          <div className={`tab-panel ${activeTab === 'users' ? 'active' : ''}`} style={{ display: activeTab === 'users' ? 'block' : 'none' }}>
-            <div className="users-section">
-              <div className="admin-section">
-                <h2>➕ Thêm người dùng mới</h2>
-                <AddUser onUserAdded={handleUserAdded} />
-              </div>
-              <div className="admin-section">
-                <h2>📋 Danh sách người dùng</h2>
-                <UserList refresh={refreshKey} />
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -195,13 +171,6 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
         .page-header p {
           font-size: 1.1rem;
           color: #7f8c8d;
-        }
-
-        .users-section {
-          display: flex;
-          flex-direction: column;
-          gap: 3rem;
-          margin-bottom: 2rem;
         }
 
         /* Tab Navigation */

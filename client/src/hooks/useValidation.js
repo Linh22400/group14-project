@@ -1,7 +1,17 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 const useValidation = () => {
   const [errors, setErrors] = useState({});
+  const [debounceTimers, setDebounceTimers] = useState({});
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(debounceTimers).forEach(timer => {
+        if (timer) clearTimeout(timer);
+      });
+    };
+  }, []);
 
   // Validation rules
   const validateName = (name) => {
@@ -47,39 +57,77 @@ const useValidation = () => {
     return '';
   };
 
-  // Validate single field
-  const validateField = (field, value) => {
-    let error = '';
-    switch (field) {
-      case 'name':
-        error = validateName(value);
-        break;
-      case 'email':
-        error = validateEmail(value);
-        break;
-      case 'password':
-        error = validatePassword(value);
-        break;
-      default:
-        break;
+  // Validate single field với debounce
+  const validateField = useCallback((field, value) => {
+    // Clear existing timer for this field
+    if (debounceTimers[field]) {
+      clearTimeout(debounceTimers[field]);
     }
     
-    setErrors(prev => ({
+    // Set new timer (300ms debounce)
+    const timer = setTimeout(() => {
+      let error = '';
+      switch (field) {
+        case 'name':
+          error = validateName(value);
+          break;
+        case 'email':
+          error = validateEmail(value);
+          break;
+        case 'password':
+          error = validatePassword(value);
+          break;
+        default:
+          break;
+      }
+      
+      setErrors(prev => ({
+        ...prev,
+        [field]: error
+      }));
+      
+      // Clean up timer reference
+      setDebounceTimers(prev => {
+        const newTimers = { ...prev };
+        delete newTimers[field];
+        return newTimers;
+      });
+    }, 300);
+    
+    // Save timer reference
+    setDebounceTimers(prev => ({
       ...prev,
-      [field]: error
+      [field]: timer
     }));
     
-    return error === '';
-  };
+    return true; // Return true immediately for real-time feedback
+  }, [debounceTimers]);
 
-  // Validate all fields
+  // Validate all fields - không dùng debounce để có kết quả ngay lập tức
   const validateAll = (fields) => {
     const newErrors = {};
     let isValid = true;
 
     Object.keys(fields).forEach(field => {
-      const error = validateField(field, fields[field]);
-      if (error !== true) {
+      let error = '';
+      const value = fields[field];
+      
+      // Validate trực tiếp không qua debounce
+      switch (field) {
+        case 'name':
+          error = validateName(value);
+          break;
+        case 'email':
+          error = validateEmail(value);
+          break;
+        case 'password':
+          error = validatePassword(value);
+          break;
+        default:
+          break;
+      }
+      
+      if (error) {
         isValid = false;
         newErrors[field] = error;
       }

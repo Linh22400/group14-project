@@ -84,7 +84,7 @@ class AdminService {
         moderatorUsers, // Số lượng kiểm duyệt viên riêng biệt
         userUsers, // Số lượng người dùng thường riêng biệt
         regularUsers: userUsers + moderatorUsers, // Tổng user thường (để tương thích ngược)
-        recentUsers: 0, // Backend không cung cấp, đặt là 0
+        recentUsers: backendData.recentUsers || 0, // Sử dụng dữ liệu từ backend
         adminPercentage: backendData.totalUsers > 0 ? Math.round((adminUsers / backendData.totalUsers) * 100) : 0,
         moderatorPercentage: backendData.totalUsers > 0 ? Math.round((moderatorUsers / backendData.totalUsers) * 100) : 0,
         userPercentage: backendData.totalUsers > 0 ? Math.round((userUsers / backendData.totalUsers) * 100) : 0

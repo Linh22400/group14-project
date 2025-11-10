@@ -65,7 +65,7 @@ const AddUser = ({ onUserAdded }) => {
             value={name} 
             onChange={(e) => {
               setName(e.target.value);
-              clearError('name');
+              validateField('name', e.target.value);
             }}
             onBlur={() => validateField('name', name)}
             placeholder="Nhập họ và tên..."
@@ -87,7 +87,7 @@ const AddUser = ({ onUserAdded }) => {
             value={email} 
             onChange={(e) => {
               setEmail(e.target.value);
-              clearError('email');
+              validateField('email', e.target.value);
             }}
             onBlur={() => validateField('email', email)}
             placeholder="Nhập địa chỉ email..."
@@ -109,7 +109,7 @@ const AddUser = ({ onUserAdded }) => {
             value={password} 
             onChange={(e) => {
               setPassword(e.target.value);
-              clearError('password');
+              validateField('password', e.target.value);
             }}
             onBlur={() => validateField('password', password)}
             placeholder="Nhập mật khẩu (ít nhất 6 ký tự)..."

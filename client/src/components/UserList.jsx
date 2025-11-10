@@ -116,7 +116,6 @@ const UserList = () => {
     }
   };
 
-  // Bắt đầu chỉnh sửa
   // Helper functions để hiển thị role giống RoleManagement
   const getRoleColor = (role) => {
     switch (role) {
@@ -144,7 +143,20 @@ const UserList = () => {
     }
   };
 
+  // Kiểm tra quyền admin
+  const isAdmin = () => {
+    const currentUser = authService.getUser();
+    return currentUser && currentUser.role === 'admin';
+  };
+
+  // Bắt đầu chỉnh sửa - kiểm tra quyền trước khi cho phép sửa
   const startEdit = (user) => {
+    // Kiểm tra nếu là moderator đang cố sửa tài khoản admin
+    if (!isAdmin() && user.role === 'admin') {
+      showNotification('⚠️ Kiểm duyệt viên không có quyền chỉnh sửa tài khoản Quản trị viên!', 'error');
+      return;
+    }
+    
     setEditingUser(user);
     setEditName(user.name);
     setEditEmail(user.email);
@@ -294,7 +306,7 @@ const UserList = () => {
                             value={editName}
                             onChange={(e) => {
                               setEditName(e.target.value);
-                              clearError('name');
+                              validateField('name', e.target.value);
                             }}
                             onBlur={() => validateField('name', editName)}
                             className={`edit-input ${errors.name ? 'error' : ''}`}
@@ -316,7 +328,7 @@ const UserList = () => {
                             value={editEmail}
                             onChange={(e) => {
                               setEditEmail(e.target.value);
-                              clearError('email');
+                              validateField('email', e.target.value);
                             }}
                             onBlur={() => validateField('email', editEmail)}
                             className={`edit-input ${errors.email ? 'error' : ''}`}
@@ -617,6 +629,23 @@ const UserList = () => {
           left: 0;
           white-space: nowrap;
           z-index: 10;
+          background: #fff5f5;
+          border: 1px solid #feb2b2;
+          border-radius: 4px;
+          padding: 0.2rem 0.4rem;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          animation: slideInError 0.2s ease-out;
+        }
+        
+        @keyframes slideInError {
+          from {
+            opacity: 0;
+            transform: translateY(-5px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         
         .action-buttons {

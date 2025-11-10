@@ -136,12 +136,21 @@ exports.getUserStats = async (req, res) => {
     ]);
 
     const totalUsers = await User.countDocuments();
+    
+    // Tính số người dùng mới trong 7 ngày qua
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentUsers = await User.countDocuments({
+      createdAt: { $gte: sevenDaysAgo }
+    });
 
     res.json({
       success: true,
       data: {
         totalUsers,
-        roleStats: stats
+        roleStats: stats,
+        recentUsers // Thêm số người dùng mới trong 7 ngày
       }
     });
   } catch (error) {

@@ -56,8 +56,15 @@ const AdminStats = () => {
 
   const fetchStats = async () => {
     try {
-      const stats = await adminService.getUserStats();
-      setStats(stats);
+      const backendStats = await adminService.getUserStats();
+      // Backend trả về recentUsers, cập nhật state với key đúng
+      setStats({
+        totalUsers: backendStats.totalUsers || 0,
+        adminUsers: backendStats.adminUsers || 0,
+        moderatorUsers: backendStats.moderatorUsers || 0,
+        userUsers: backendStats.userUsers || 0,
+        recentUsers: backendStats.recentUsers || 0
+      });
     } catch (error) {
       console.error('Lỗi khi lấy thống kê:', error);
     } finally {
@@ -134,7 +141,7 @@ const AdminStats = () => {
           value={stats.recentUsers}
           icon="🆕"
           color="#2ecc71"
-          description="Đăng ký trong 7 ngày qua"
+          description="Người dùng mới trong 7 ngày qua (tự đăng ký + admin/moderator thêm)"
         />
       </div>
 
