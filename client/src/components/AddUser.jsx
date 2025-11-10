@@ -9,7 +9,7 @@ const AddUser = ({ onUserAdded }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { errors, validateField, validateAll, clearError } = useValidation();
+  const { errors, validateField, validateAll } = useValidation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -11,7 +11,6 @@ const isAdmin = () => {
 
 const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
   const [activeTab, setActiveTab] = useState('stats');
-  const [refreshKey, setRefreshKey] = useState(0);
   const [currentUser, setCurrentUser] = useState(authService.getUser());
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -20,19 +19,11 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
   useEffect(() => {
     console.log('AdminDashboard mounted, auto-refreshing data...');
     setIsMounted(true);
-    
-    // Tự động refresh data khi admin mới login
-    setRefreshKey(prev => {
-      console.log('AdminDashboard refreshKey changed from', prev, 'to', prev + 1);
-      return prev + 1;
-    });
 
     // Lắng nghe sự kiện userRoleUpdated để cập nhật currentUser
     const handleUserRoleUpdated = (event) => {
       if (event.detail && event.detail.user) {
         setCurrentUser(event.detail.user);
-        // Force refresh của các tabs
-        setRefreshKey(prev => prev + 1);
       }
     };
 
@@ -55,10 +46,7 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
       setActiveTab(tab);
       setIsTransitioning(false);
       
-      // Trigger refresh for roles tab
-      if (tab === 'roles') {
-        setRefreshKey(prev => prev + 1);
-      }
+      // No refresh needed for roles tab
     }, 150);
   };
 

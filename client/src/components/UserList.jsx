@@ -12,7 +12,7 @@ const UserList = () => {
   const [editEmail, setEditEmail] = useState('');
   // Không cần editRole nữa vì không cho phép sửa vai trò
   const [loading, setLoading] = useState(true);
-  const { errors, validateField, validateAll, clearError } = useValidation();
+  const { errors, validateField, validateAll } = useValidation();
   
   // Thêm state cho phân trang
   const [currentPage, setCurrentPage] = useState(1);
