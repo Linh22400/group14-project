@@ -11,6 +11,12 @@ const Profile = ({ onUpdateClick }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [sendingCode, setSendingCode] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   // Helper function để xử lý avatar URL
   const getAvatarUrl = (avatarUrl) => {
@@ -57,6 +63,92 @@ const Profile = ({ onUpdateClick }) => {
 
   const handleRefresh = () => {
     fetchProfile();
+  };
+
+  const handleSendResetCode = async () => {
+    try {
+      setSendingCode(true);
+      setError('');
+      
+      const response = await fetch(buildApiUrl('/api/profile/send-reset-code'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authService.getAccessToken()}`
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        showNotification(data.message, 'success');
+        setShowPasswordReset(true);
+      } else {
+        setError(data.message || 'Không thể gửi mã xác nhận');
+      }
+    } catch (error) {
+      setError('Lỗi khi gửi mã xác nhận');
+      console.error('Lỗi gửi mã xác nhận:', error);
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự');
+      return;
+    }
+
+    try {
+      setResettingPassword(true);
+      setError('');
+      
+      const response = await fetch(buildApiUrl('/api/profile/reset-password'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authService.getAccessToken()}`
+        },
+        body: JSON.stringify({
+          resetCode,
+          newPassword
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        showNotification(data.message, 'success');
+        // Reset form
+        setShowPasswordReset(false);
+        setResetCode('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        setError(data.message || 'Không thể đặt lại mật khẩu');
+      }
+    } catch (error) {
+      setError('Lỗi khi đặt lại mật khẩu');
+      console.error('Lỗi đặt lại mật khẩu:', error);
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
+  const handleCancelReset = () => {
+    setShowPasswordReset(false);
+    setResetCode('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setError('');
   };
 
 
@@ -143,6 +235,75 @@ const Profile = ({ onUpdateClick }) => {
             <span className="info-value">
               {new Date(user.updatedAt).toLocaleDateString('vi-VN')}
             </span>
+          </div>
+
+          {/* Password Reset Section */}
+          <div className="password-reset-section">
+            {!showPasswordReset ? (
+              <button 
+                onClick={handleSendResetCode} 
+                className="reset-password-button"
+                disabled={sendingCode}
+              >
+                {sendingCode ? 'Đang gửi mã...' : '🔒 Đặt lại mật khẩu'}
+              </button>
+            ) : (
+              <div className="password-reset-form">
+                <h3>Đặt lại mật khẩu</h3>
+                {error && <div className="error-message">{error}</div>}
+                
+                <div className="form-group">
+                  <label>Mã xác nhận (4 chữ số):</label>
+                  <input
+                    type="text"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value)}
+                    placeholder="Nhập mã từ email"
+                    maxLength="4"
+                    className="reset-code-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Mật khẩu mới:</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
+                    className="password-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Xác nhận mật khẩu:</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Nhập lại mật khẩu mới"
+                    className="password-input"
+                  />
+                </div>
+
+                <div className="reset-form-actions">
+                  <button 
+                    onClick={handleResetPassword}
+                    className="confirm-reset-button"
+                    disabled={resettingPassword}
+                  >
+                    {resettingPassword ? 'Đang xử lý...' : 'Xác nhận đặt lại'}
+                  </button>
+                  <button 
+                    onClick={handleCancelReset}
+                    className="cancel-reset-button"
+                    disabled={resettingPassword}
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

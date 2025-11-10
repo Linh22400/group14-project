@@ -31,9 +31,46 @@ const requireAdmin = checkRole(['admin']);
 const requireModerator = checkRole(['admin', 'moderator']);
 const requireUser = checkRole(['user', 'admin', 'moderator']);
 
+// Middleware cho phép admin và moderator truy cập các chức năng quản lý user
+const requireModeratorOrAdmin = checkRole(['admin', 'moderator']);
+
+// Middleware kiểm tra moderator không thể thay đổi role của admin
+const canModeratorUpdateRole = (req, res, next) => {
+  // Nếu là admin thì cho phép tất cả
+  if (req.user.role === 'admin') {
+    return next();
+  }
+  
+  // Nếu là moderator
+  if (req.user.role === 'moderator') {
+    const targetRole = req.body.role;
+    const targetUserId = req.params.id;
+    
+    // Moderator chỉ có thể phân quyền user hoặc moderator
+    if (targetRole && targetRole === 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Moderator không có quyền phân quyền Admin'
+      });
+    }
+    
+    // Không được thay đổi role của chính mình
+    if (targetUserId === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không thể thay đổi role của chính bạn'
+      });
+    }
+  }
+  
+  next();
+};
+
 module.exports = {
   checkRole,
   requireAdmin,
   requireModerator,
-  requireUser
+  requireUser,
+  requireModeratorOrAdmin,
+  canModeratorUpdateRole
 };

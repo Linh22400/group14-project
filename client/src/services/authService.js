@@ -211,8 +211,12 @@ class AuthService {
     const response = await this.retryRequest(url, options);
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Request failed');
+      const errorData = await response.json();
+      const error = new Error(errorData.message || 'Request failed');
+      error.response = response;
+      error.status = response.status;
+      error.serverData = errorData;
+      throw error;
     }
 
     return response;

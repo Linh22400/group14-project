@@ -43,11 +43,13 @@ exports.getUserById = async (req, res) => {
   }
 };
 
-// Cập nhật role của user (chỉ admin)
+// Cập nhật role của user (admin và moderator)
 exports.updateUserRole = async (req, res) => {
   try {
     const { role } = req.body;
     const userId = req.params.id;
+    
+    console.log('Debug updateUserRole:', { userId, role, params: req.params, user: req.user });
 
     // Validate role
     const validRoles = ['user', 'admin', 'moderator'];
@@ -64,6 +66,34 @@ exports.updateUserRole = async (req, res) => {
         success: false,
         message: 'Không thể thay đổi role của chính bạn'
       });
+    }
+
+    // Kiểm tra nếu là moderator
+    if (req.user.role === 'moderator') {
+      // Moderator không thể phân quyền admin
+      if (role === 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Moderator không có quyền phân quyền Admin'
+        });
+      }
+
+      // Lấy thông tin user hiện tại để kiểm tra
+      const currentUser = await User.findById(userId).select('role');
+      if (!currentUser) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy user'
+        });
+      }
+
+      // Moderator không thể thay đổi role của admin khác
+      if (currentUser.role === 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Moderator không có quyền thay đổi role của Admin'
+        });
+      }
     }
 
     const user = await User.findByIdAndUpdate(
@@ -135,17 +165,29 @@ exports.getUsers = async (_req, res, next) => {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     }));
-    res.json(mappedUsers);
+    res.json({
+      success: true,
+      data: mappedUsers,
+      count: mappedUsers.length
+    });
   } catch (err) { next(err); }
 };
 
 exports.createUser = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body || {};
+    const { name, email, password, role } = req.body || {};
     if (!name || !email || !password) {
       return res.status(400).json({ 
         success: false,
         message: 'Tên, email và mật khẩu là bắt buộc' 
+      });
+    }
+
+    // Kiểm tra quyền tạo user với role cụ thể
+    if (role && role === 'admin' && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Chỉ Admin mới có quyền tạo tài khoản Admin'
       });
     }
 
@@ -158,7 +200,12 @@ exports.createUser = async (req, res, next) => {
       });
     }
     
-    const user = await User.create({ name, email, password });
+    const userData = { name, email, password };
+    if (role && ['user', 'moderator'].includes(role)) {
+      userData.role = role;
+    }
+    
+    const user = await User.create(userData);
     
     res.status(201).json({
       success: true,
@@ -200,6 +247,26 @@ exports.updateUser = async (req, res, next) => {
       return res.status(400).json({ message: 'nothing to update' });
     }
 
+    // Kiểm tra nếu là moderator
+    if (req.user.role === 'moderator') {
+      // Lấy thông tin user cần update để kiểm tra role
+      const userToUpdate = await User.findById(id).select('role');
+      if (!userToUpdate) {
+        return res.status(404).json({ 
+          success: false,
+          message: 'Không tìm thấy user'
+        });
+      }
+      
+      // Moderator không thể update admin
+      if (userToUpdate.role === 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Moderator không có quyền cập nhật Admin'
+        });
+      }
+    }
+
     const updated = await User.findByIdAndUpdate(
       id,
       { $set: { ...(name && { name }), ...(email && { email }) } },
@@ -223,10 +290,32 @@ exports.updateUser = async (req, res, next) => {
 exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
+    
+    // Kiểm tra nếu là moderator
+    if (req.user.role === 'moderator') {
+      // Lấy thông tin user cần xóa để kiểm tra role
+      const userToDelete = await User.findById(id).select('role');
+      if (!userToDelete) {
+        return res.status(404).json({ 
+          success: false,
+          message: 'Không tìm thấy user'
+        });
+      }
+      
+      // Moderator không thể xóa admin
+      if (userToDelete.role === 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Moderator không có quyền xóa Admin'
+        });
+      }
+    }
+    
     const deleted = await User.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ message: 'user not found' });
 
     res.json({ 
+      success: true,
       message: 'User deleted successfully', 
       id: deleted._id,
       name: deleted.name,

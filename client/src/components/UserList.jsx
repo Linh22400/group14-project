@@ -225,11 +225,23 @@ const UserList = () => {
       }));
     } catch (error) {
       console.error('Lỗi khi cập nhật người dùng:', error);
-      if (error.message.includes('403')) {
-        showNotification('Bạn không có quyền cập nhật người dùng!', 'error');
-      } else {
-        showNotification('Có lỗi xảy ra khi cập nhật người dùng!', 'error');
+      
+      // Lấy thông điệp lỗi chi tiết từ server response
+      let errorMessage = 'Có lỗi xảy ra khi cập nhật người dùng!';
+      
+      // Ưu tiên sử dụng serverData.message nếu có
+      if (error.serverData && error.serverData.message) {
+        errorMessage = error.serverData.message;
+      } else if (error.message) {
+        // Nếu không có serverData, dùng message từ error
+        if (error.message.includes('Moderator không có quyền')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('403')) {
+          errorMessage = 'Bạn không có quyền cập nhật người dùng này!';
+        }
       }
+      
+      showNotification(errorMessage, 'error');
     }
   };
 

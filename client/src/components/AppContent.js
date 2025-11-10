@@ -122,7 +122,7 @@ function AppContent() {
       return <Navigate to="/login" replace state={{ from: location }} />;
     }
 
-    if (requireAdmin && currentUser?.role !== 'admin') {
+    if (requireAdmin && (currentUser?.role !== 'admin' && currentUser?.role !== 'moderator')) {
       return <Navigate to="/" replace />;
     }
 
@@ -216,12 +216,12 @@ function AppContent() {
         >
           📋 Nhật ký
         </button>
-        {currentUser?.role === 'admin' && (
+        {(currentUser?.role === 'admin' || currentUser?.role === 'moderator') && (
           <button 
             className={`nav-button ${isActive('/admin') ? 'active' : ''}`} 
             onClick={() => navigate('/admin')}
           >
-            👨‍💼 Admin
+            {currentUser?.role === 'admin' ? '👨‍💼 Admin' : '👮‍♀️ Moderator'}
           </button>
         )}
         {currentUser?.role === 'admin' && (
@@ -288,7 +288,7 @@ function AppContent() {
         <ProtectedRoute>
           <Layout>
             <div className="content-grid">
-              {currentUser?.role === 'admin' && (
+              {(currentUser?.role === 'admin' || currentUser?.role === 'moderator') && (
                 <section className="add-user-section">
                   <div className="section-card">
                     <h2 className="section-title">Thêm Người Dùng Mới</h2>
@@ -297,7 +297,7 @@ function AppContent() {
                 </section>
               )}
               
-              {currentUser?.role === 'admin' && (
+              {(currentUser?.role === 'admin' || currentUser?.role === 'moderator') && (
                 <section className="user-list-section">
                   <div className="section-card">
                     <h2 className="section-title">Danh Sách Người Dùng</h2>
@@ -306,7 +306,7 @@ function AppContent() {
                 </section>
               )}
               
-              {currentUser?.role !== 'admin' && (
+              {(currentUser?.role !== 'admin' && currentUser?.role !== 'moderator') && (
                 <section className="welcome-section">
                   <div className="section-card">
                     <h2 className="section-title">Chào mừng {currentUser?.name}!</h2>

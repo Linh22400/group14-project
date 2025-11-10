@@ -82,4 +82,7 @@ const sendResetPasswordEmail = async (email, resetUrl) => {
   throw lastError;
 };
 
-module.exports = { sendResetPasswordEmail };
+module.exports = { 
+  sendResetPasswordEmail,
+  transporter
+};

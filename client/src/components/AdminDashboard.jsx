@@ -65,20 +65,26 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
 
 
 
+  // Kiểm tra quyền admin hoặc moderator
+  const isAdminOrModerator = () => {
+    const user = authService.getUser();
+    return user && (user.role === 'admin' || user.role === 'moderator');
+  };
+
   // Kiểm tra quyền admin
   const isAdmin = () => {
     const user = authService.getUser();
     return user && user.role === 'admin';
   };
 
-  if (!isAdmin()) {
+  if (!isAdminOrModerator()) {
     return (
       <div className="admin-error">
         <div className="error-content">
           <h2>🚫 Truy cập bị từ chối</h2>
-          <p>Bạn cần quyền Admin để truy cập trang này.</p>
+          <p>Bạn cần quyền Admin hoặc Moderator để truy cập trang này.</p>
           <button onClick={() => window.location.href = '/login'} className="login-btn">
-            Đăng nhập với quyền Admin
+            Đăng nhập với quyền phù hợp
           </button>
         </div>
       </div>
@@ -91,19 +97,21 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
       <div className={`admin-content ${isMounted ? 'mounted' : ''}`}>
         {/* Page Title */}
         <div className="page-header">
-          <h1>👨‍💼 Bảng điều khiển Admin</h1>
+          <h1>{isAdmin() ? '👨‍💼 Bảng điều khiển Admin' : '👮‍♀️ Bảng điều khiển Moderator'}</h1>
           <p>Quản lý hệ thống và người dùng</p>
         </div>
 
         {/* Navigation Tabs */}
         <div className="admin-tabs">
-          <button 
-            className={`tab-button ${activeTab === 'stats' ? 'active' : ''} ${isTransitioning ? 'transitioning' : ''}`}
-            onClick={() => handleTabChange('stats')}
-            disabled={isTransitioning}
-          >
-            📊 Thống kê
-          </button>
+          {isAdmin() && (
+            <button 
+              className={`tab-button ${activeTab === 'stats' ? 'active' : ''} ${isTransitioning ? 'transitioning' : ''}`}
+              onClick={() => handleTabChange('stats')}
+              disabled={isTransitioning}
+            >
+              📊 Thống kê
+            </button>
+          )}
           <button 
             className={`tab-button ${activeTab === 'roles' ? 'active' : ''} ${isTransitioning ? 'transitioning' : ''}`}
             onClick={() => handleTabChange('roles')}
@@ -122,9 +130,11 @@ const AdminDashboard = ({ onUserRoleUpdate, updateCurrentUserRole }) => {
 
         {/* Tab Content */}
         <div className="tab-content">
-          <div className={`tab-panel ${activeTab === 'stats' ? 'active' : ''}`} style={{ display: activeTab === 'stats' ? 'block' : 'none' }}>
-            <AdminStats />
-          </div>
+          {isAdmin() && (
+            <div className={`tab-panel ${activeTab === 'stats' ? 'active' : ''}`} style={{ display: activeTab === 'stats' ? 'block' : 'none' }}>
+              <AdminStats />
+            </div>
+          )}
           <div className={`tab-panel ${activeTab === 'roles' ? 'active' : ''}`} style={{ display: activeTab === 'roles' ? 'block' : 'none' }}>
             <RoleManagement 
               onUserRoleUpdate={onUserRoleUpdate}

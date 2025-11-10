@@ -10,6 +10,12 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
   const [updatingRole, setUpdatingRole] = useState({});
   const [notification, setNotification] = useState('');
 
+  // Kiểm tra quyền admin
+  const isAdmin = () => {
+    const user = authService.getUser();
+    return user && user.role === 'admin';
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -82,6 +88,7 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
   };
 
   const updateRole = async (userId, email, newRole) => {
+    console.log('Debug updateRole:', { userId, email, newRole });
     setUpdatingRole({ [userId]: true });
     setNotification('');
 
@@ -90,7 +97,7 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
       
       // Cập nhật role trong state
       setUsers(users.map(user => 
-        user._id === userId ? { ...user, role: newRole } : user
+        user.id === userId ? { ...user, role: newRole } : user
       ));
       setNotification(`✅ Cập nhật role thành ${newRole} thành công!`);
       showNotification(`✅ Cập nhật role thành ${newRole} thành công!`, 'success');
@@ -172,14 +179,29 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
 
   return (
     <div className="role-management">
-      <div className="role-header">
-        <h2>👑 Quản lý vai trò</h2>
-        <p>Phân quyền và quản lý vai trò người dùng</p>
-      </div>
+        <div className="role-header">
+          <h2>👑 Quản lý vai trò</h2>
+          <p>Phân quyền và quản lý vai trò người dùng</p>
+        </div>
 
-      {notification && (
-        <div className="notification">{notification}</div>
-      )}
+        {!isAdmin() && (
+          <div className="moderator-notice" style={{
+            backgroundColor: '#fff3cd',
+            border: '1px solid #ffeaa7',
+            borderRadius: '8px',
+            padding: '15px',
+            marginBottom: '20px',
+            color: '#856404'
+          }}>
+            <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5' }}>
+              ⚠️ Với tư cách Moderator, bạn chỉ có thể quản lý vai trò User và Moderator. Không thể tạo hoặc chỉnh sửa Admin.
+            </p>
+          </div>
+        )}
+
+        {notification && (
+          <div className="notification">{notification}</div>
+        )}
 
       <div className="users-table-container">
         <table className="users-table">
@@ -192,8 +214,8 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
-              <tr key={user._id} className="user-row">
+            {users.filter(user => isAdmin() || user.role !== 'admin').map((user) => (
+                <tr key={user.id} className="user-row">
                 <td>
                   <div className="user-info">
                     <div className="user-avatar">
@@ -201,7 +223,7 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
                     </div>
                     <div className="user-details">
                       <div className="user-name">{user.name}</div>
-                      <div className="user-id">ID: {user._id}</div>
+                      <div className="user-id">ID: {user.id}</div>
                     </div>
                   </div>
                 </td>
@@ -220,8 +242,8 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
                   <div className="role-actions">
                     <select
                       value={user.role}
-                      onChange={(e) => updateRole(user._id, user.email, e.target.value)}
-                      disabled={updatingRole[user._id]}
+                      onChange={(e) => updateRole(user.id, user.email, e.target.value)}
+                      disabled={updatingRole[user.id]}
                       className="role-select"
                       style={{ backgroundColor: getRoleColor(user.role), color: 'white' }}
                     >
@@ -231,9 +253,11 @@ const RoleManagement = ({ onUserRoleUpdate, updateCurrentUserRole, currentUser }
                       <option value="moderator" style={{ backgroundColor: '#f39c12', color: 'white' }}>
                         👮‍♀️ Kiểm duyệt viên
                       </option>
-                      <option value="admin" style={{ backgroundColor: '#e74c3c', color: 'white' }}>
-                        👨‍💼 Quản trị viên
-                      </option>
+                      {isAdmin() && (
+                        <option value="admin" style={{ backgroundColor: '#e74c3c', color: 'white' }}>
+                          👨‍💼 Quản trị viên
+                        </option>
+                      )}
                     </select>
                   </div>
                 </td>
