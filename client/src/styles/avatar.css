@@ -1,0 +1,72 @@
+/* Avatar Component Styles */
+.avatar-container {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 2px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.avatar-container:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), 0 0 0 3px rgba(102, 126, 234, 0.4);
+  border-color: #ffffff;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.avatar-fallback {
+  width: 1em;
+  height: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  border-radius: 50%;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  font-size: 1.5em;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  transform: scaleX(1.1);
+}
+
+/* Size-specific adjustments for initials */
+.avatar-container.w-8 .avatar-fallback {
+  font-size: 1.3em;
+  transform: scaleX(1.15);
+}
+
+.avatar-container.w-10 .avatar-fallback {
+  font-size: 1.5em;
+  transform: scaleX(1.1);
+}
+
+.avatar-container.w-12 .avatar-fallback {
+  font-size: 1.7em;
+  transform: scaleX(1.05);
+}
+
+/* Dark mode support */
+.dark .avatar-container {
+  border-color: #2d3748;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(159, 122, 234, 0.4);
+}
+
+.dark .avatar-container:hover {
+  border-color: #4a5568;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 0 3px rgba(159, 122, 234, 0.5);
+}

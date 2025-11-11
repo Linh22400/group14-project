@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
+import { useAvatarRefresh } from '../hooks/useAvatarRefresh';
 import { buildApiUrl } from '../config/api';
 import './AvatarUpload.css';
 
 const AvatarUpload = ({ currentAvatar, onAvatarChange, user }) => {
   const { showNotification } = useNotification();
+  const { refreshOnAvatarUpdate } = useAvatarRefresh();
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(null);
   const fileInputRef = useRef(null);
@@ -62,6 +64,9 @@ const AvatarUpload = ({ currentAvatar, onAvatarChange, user }) => {
       if (onAvatarChange) {
         onAvatarChange(response.avatar);
       }
+
+      // Refresh danh sách users
+      refreshOnAvatarUpdate();
 
       // Clear preview
       setPreview(null);

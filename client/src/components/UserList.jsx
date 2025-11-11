@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import useValidation from '../hooks/useValidation';
 import authService from '../services/authService';
 import { useNotification } from '../contexts/NotificationContext';
+import { useUserRefresh } from '../contexts/UserRefreshContext';
 import { buildApiUrl } from '../config/api';
+import Avatar from './Avatar';
 
 const UserList = () => {
   const { showNotification } = useNotification();
@@ -13,6 +15,7 @@ const UserList = () => {
   // Không cần editRole nữa vì không cho phép sửa vai trò
   const [loading, setLoading] = useState(true);
   const { errors, validateField, validateAll } = useValidation();
+  const { refreshKey } = useUserRefresh();
   
   // Thêm state cho phân trang
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,7 +63,7 @@ const UserList = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+  }, [fetchUsers, refreshKey]);
 
   // Reset về trang 1 khi danh sách users thay đổi
   useEffect(() => {
@@ -315,7 +318,7 @@ const UserList = () => {
                         </div>
                       ) : (
                         <div className="user-info">
-                          <div className="user-avatar">{user.name.charAt(0).toUpperCase()}</div>
+                          <Avatar user={user} size="medium" />
                           <span className="user-name">{user.name}</span>
                         </div>
                       )}
@@ -533,17 +536,8 @@ const UserList = () => {
           gap: 1rem;
         }
         
-        .user-avatar {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #667eea, #764ba2);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          font-size: 1.1rem;
+        .avatar-container {
+          margin: 0 auto;
         }
         
         .user-name {

@@ -171,6 +171,7 @@ exports.getUsers = async (_req, res, next) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      avatar: user.avatar,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     }));
@@ -224,6 +225,7 @@ exports.createUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        avatar: user.avatar,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
@@ -289,6 +291,7 @@ exports.updateUser = async (req, res, next) => {
       name: updated.name,
       email: updated.email,
       role: updated.role,
+      avatar: updated.avatar,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt
     });
