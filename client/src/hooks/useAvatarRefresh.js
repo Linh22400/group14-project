@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useUserRefresh } from '../contexts/UserRefreshContext';
 
 export const useAvatarRefresh = () => {
